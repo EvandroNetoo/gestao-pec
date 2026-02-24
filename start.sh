@@ -4,7 +4,7 @@ set -o errexit
 
 echo "Running collectstatic..."
 cd src
-python manage.py collectstatic --noinput -i tailwind.css
+python manage.py collectstatic --noinput -i
 
 echo "Running migrations..."
 python manage.py migrate --noinput

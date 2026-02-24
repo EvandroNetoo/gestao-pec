@@ -52,7 +52,6 @@ class SigninView(View):
     def post(self, request: HttpRequest):
         form = self.form_class(request, request.POST)
         if not form.is_valid():
-            print(form.errors)
             context = {
                 'form': form,
             }
