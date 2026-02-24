@@ -1,0 +1,102 @@
+{% extends "schedule/gestao/base_gestao.html" %}
+
+{% block title %}
+
+    Relatório por Turma —
+
+{% endblock title %}
+
+{% block content %}
+
+    <h1 class="text-2xl font-bold mb-6">Relatório de Presenças por Turma</h1>
+
+    <div class="card bg-base-100 shadow-sm mb-6">
+        <div class="card-body">
+
+            <form method="get" class="flex flex-col sm:flex-row gap-2">
+                <select name="turma" class="select select-neutral flex-1">
+                    <option value="">Selecione uma turma</option>
+
+                    {% for turma in turmas_opcoes %}
+
+                        <option value="{{ turma.pk }}" 
+                            {% if turma_filtro == turma.pk|stringformat:"d" %}selected{% endif %}>{{ turma }}</option>
+
+                    {% endfor %}
+
+                </select>
+                <button type="submit" class="btn btn-primary">Gerar Relatório</button>
+            </form>
+        </div>
+    </div>
+
+    {% if turma_selecionada %}
+
+        <div class="mb-4">
+            <h2 class="text-xl font-semibold">{{ turma_selecionada }}</h2>
+            <p class="text-sm text-base-content/70">{{ dados_alunos|length }} aluno(s)</p>
+        </div>
+
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body">
+                <div class="overflow-x-auto">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Aluno</th>
+                                <th class="text-center">Presenças</th>
+                                <th class="text-center">Ausências</th>
+                                <th class="text-center">Total Alocações</th>
+                                <th class="text-center">Frequência</th>
+                                <th class="text-center">Pontos</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            {% for dado in dados_alunos %}
+
+
+                                <tr>
+                                    <td class="font-medium">{{ dado.aluno.nome }}</td>
+                                    <td class="text-center">
+                                        <span class="badge badge-success badge-sm">{{ dado.presentes }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge badge-error badge-sm">{{ dado.ausentes }}</span>
+                                    </td>
+                                    <td class="text-center">{{ dado.total_alocacoes }}</td>
+                                    <td class="text-center">
+                                        <div class="flex items-center gap-2 justify-center">
+                                            <progress class="progress progress-success w-16"
+                                                      value="{{ dado.percentual }}"
+                                                      max="100"></progress>
+                                            <span class="text-sm font-medium">{{ dado.percentual }}%</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge badge-primary badge-sm">{{ dado.total_presencas }} pts</span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'relatorio_aluno' dado.aluno.pk %}"
+                                           class="btn btn-ghost btn-xs">Detalhes →</a>
+                                    </td>
+                                </tr>
+
+                            {% empty %}
+
+                                <tr>
+                                    <td colspan="7" class="text-center text-base-content/50 py-4">Nenhum aluno nesta turma.</td>
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    {% endif %}
+
+{% endblock content %}

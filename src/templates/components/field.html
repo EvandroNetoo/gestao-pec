@@ -1,0 +1,27 @@
+{% load widget_tweaks %}
+
+{% if field.field.widget.input_type == 'checkbox' %}
+
+    {{ field }}
+
+{% elif field.field.widget.input_type == 'radio' %}
+
+    {{ field }}
+
+{% elif field.field.widget.input_type == 'file' %}
+
+    {{ field|add_class:'file-input border-neutral w-full' }}
+
+{% elif field.field.widget.input_type == 'select' %}
+
+    {{ field|add_class:'select select-neutral w-full' }}
+
+{% elif field.field.widget.template_name == 'django/forms/widgets/textarea.html' %}
+
+    {{ field|add_class:'textarea textarea-neutral w-full' }}
+
+{% else %}
+
+    {{ field|add_class:'input input-neutral w-full' }}
+
+{% endif %}

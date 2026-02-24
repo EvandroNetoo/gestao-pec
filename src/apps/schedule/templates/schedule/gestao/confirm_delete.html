@@ -1,0 +1,37 @@
+{% extends "schedule/gestao/base_gestao.html" %}
+
+{% block title %}{{ page_title }} — {% endblock title %}
+
+{% block content %}
+
+    <div class="max-w-lg mx-auto">
+        <div class="flex items-center gap-2 mb-6">
+
+            {% if back_url %}
+                <a href="{{ back_url }}" class="btn btn-ghost btn-sm btn-circle">←</a>
+            {% endif %}
+
+            <h1 class="text-2xl font-bold">{{ page_title }}</h1>
+        </div>
+
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body">
+
+                <c-alert type="warning">
+                    Tem certeza que deseja excluir <strong>{{ obj }}</strong>?
+                    Esta ação não pode ser desfeita.
+                </c-alert>
+
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+
+                    <div class="card-actions justify-end">
+                        <a href="{{ back_url }}" class="btn btn-ghost">Cancelar</a>
+                        <button type="submit" class="btn btn-error">Excluir</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}

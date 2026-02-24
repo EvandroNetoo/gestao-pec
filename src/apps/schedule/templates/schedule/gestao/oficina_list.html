@@ -1,0 +1,71 @@
+{% extends "schedule/gestao/base_gestao.html" %}
+
+{% block title %}Oficinas — {% endblock title %}
+
+{% block content %}
+
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <h1 class="text-2xl font-bold">Oficinas</h1>
+        <a href="{% url 'oficina_create' %}" class="btn btn-primary btn-sm">+ Nova Oficina</a>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+
+            <form method="get" class="flex flex-col sm:flex-row gap-2 mb-4">
+                <input type="text"
+                       name="q"
+                       value="{{ q }}"
+                       placeholder="Buscar oficina…"
+                       class="input input-sm input-neutral flex-1" />
+                <button type="submit" class="btn btn-sm btn-neutral">Buscar</button>
+
+                {% if q %}
+                    <a href="{% url 'oficina_list' %}" class="btn btn-sm btn-ghost">Limpar</a>
+                {% endif %}
+
+            </form>
+
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Local Padrão</th>
+                            <th class="text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        {% for oficina in oficinas %}
+
+                            <tr>
+                                <td class="font-medium">{{ oficina.nome }}</td>
+                                <td>{{ oficina.local_padrao }}</td>
+                                <td class="text-right">
+                                    <div class="flex justify-end gap-1">
+                                        <a href="{% url 'oficina_update' oficina.pk %}"
+                                           class="btn btn-ghost btn-xs">✏️</a>
+                                        <a href="{% url 'oficina_delete' oficina.pk %}"
+                                           class="btn btn-ghost btn-xs text-error">🗑️</a>
+                                    </div>
+                                </td>
+                            </tr>
+
+                        {% empty %}
+
+                            <tr>
+                                <td colspan="3" class="text-center text-base-content/50 py-8">
+                                    Nenhuma oficina encontrada.
+                                </td>
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}

@@ -1,0 +1,99 @@
+{% extends "schedule/gestao/base_gestao.html" %}
+
+{% block title %}Turmas — {% endblock title %}
+
+{% block content %}
+
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <h1 class="text-2xl font-bold">Turmas</h1>
+        <a href="{% url 'turma_create' %}" class="btn btn-primary btn-sm">+ Nova Turma</a>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+
+            <form method="get" class="flex flex-col sm:flex-row gap-2 mb-4">
+                <input type="text"
+                       name="q"
+                       value="{{ q }}"
+                       placeholder="Buscar turma…"
+                       class="input input-sm input-neutral flex-1" />
+                <select name="semestre" class="select select-sm select-neutral">
+                    <option value="">Todos os semestres</option>
+
+                    {% for semestre in semestres %}
+
+                        <option value="{{ semestre.pk }}"
+                                {% if semestre_filtro == semestre.pk|stringformat:"d" %}selected{% endif %}>
+                            {{ semestre.nome }}{% if not semestre.ativo %} (inativo){% endif %}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+                <button type="submit" class="btn btn-sm btn-neutral">Filtrar</button>
+
+                {% if q or semestre_filtro %}
+                    <a href="{% url 'turma_list' %}" class="btn btn-sm btn-ghost">Limpar</a>
+                {% endif %}
+
+            </form>
+
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Semestre</th>
+                            <th>Status</th>
+                            <th>Alunos</th>
+                            <th class="text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        {% for turma in turmas %}
+
+                            <tr>
+                                <td class="font-medium">{{ turma.nome }}</td>
+                                <td>
+                                    <span class="badge badge-ghost badge-sm">{{ turma.semestre }}</span>
+                                </td>
+                                <td>
+                                    {% if turma.semestre.ativo %}
+                                        <span class="badge badge-success badge-xs">Ativo</span>
+                                    {% else %}
+                                        <span class="badge badge-ghost badge-xs">Inativo</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ turma.total_alunos }}</td>
+                                <td class="text-right">
+                                    <div class="flex justify-end gap-1">
+                                        <a href="{% url 'turma_copiar' turma.pk %}"
+                                           class="btn btn-ghost btn-xs"
+                                           title="Copiar para novo semestre">📋</a>
+                                        <a href="{% url 'turma_update' turma.pk %}"
+                                           class="btn btn-ghost btn-xs">✏️</a>
+                                        <a href="{% url 'turma_delete' turma.pk %}"
+                                           class="btn btn-ghost btn-xs text-error">🗑️</a>
+                                    </div>
+                                </td>
+                            </tr>
+
+                        {% empty %}
+
+                            <tr>
+                                <td colspan="5" class="text-center text-base-content/50 py-8">
+                                    Nenhuma turma encontrada.
+                                </td>
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}

@@ -1,0 +1,13 @@
+<div class="card bg-base-100 shadow-sm">
+    <div class="card-body">
+        <c-alert type="success">
+            Lista de presenças salva com sucesso para <strong>{{ evento.titulo }}</strong>!
+        </c-alert>
+
+        <div class="card-actions justify-end mt-4">
+            <a href="{% url 'evento_presenca' evento.pk %}"
+               class="btn btn-outline btn-sm">Editar novamente</a>
+            <a href="{% url 'home' %}" class="btn btn-primary btn-sm">Voltar à Agenda</a>
+        </div>
+    </div>
+</div>

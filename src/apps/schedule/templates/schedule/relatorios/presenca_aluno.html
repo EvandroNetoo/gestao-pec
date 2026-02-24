@@ -1,0 +1,112 @@
+{% extends "schedule/gestao/base_gestao.html" %}
+
+{% block title %}
+
+    Relatório — {{ aluno.nome }} —
+
+{% endblock title %}
+
+{% block content %}
+
+    <div class="flex items-center gap-2 mb-6">
+        <a href="{% url 'aluno_list' %}" class="btn btn-ghost btn-sm btn-circle">←</a>
+        <h1 class="text-2xl font-bold">{{ aluno.nome }}</h1>
+    </div>
+
+    <!-- Resumo do aluno -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+        <div class="stat bg-base-100 rounded-box shadow-sm">
+            <div class="stat-title">Turma</div>
+            <div class="stat-value text-sm">{{ aluno.turma }}</div>
+        </div>
+        <div class="stat bg-base-100 rounded-box shadow-sm">
+            <div class="stat-title">Pontos</div>
+            <div class="stat-value text-primary">{{ stats.pontos }}</div>
+        </div>
+        <div class="stat bg-base-100 rounded-box shadow-sm">
+            <div class="stat-title">Presenças</div>
+            <div class="stat-value text-success">{{ stats.presentes }}</div>
+        </div>
+        <div class="stat bg-base-100 rounded-box shadow-sm">
+            <div class="stat-title">Ausências</div>
+            <div class="stat-value text-error">{{ stats.ausentes }}</div>
+        </div>
+        <div class="stat bg-base-100 rounded-box shadow-sm">
+            <div class="stat-title">Dispensas</div>
+            <div class="stat-value text-info">{{ stats.dispensados }}</div>
+        </div>
+        <div class="stat bg-base-100 rounded-box shadow-sm">
+            <div class="stat-title">Frequência</div>
+            <div class="stat-value text-primary">{{ stats.percentual }}%</div>
+        </div>
+    </div>
+
+    <!-- Barra de progresso -->
+
+    {% if stats.total > 0 %}
+
+        <div class="mb-6">
+            <progress class="progress progress-success w-full"
+                      value="{{ stats.percentual }}"
+                      max="100"></progress>
+        </div>
+
+    {% endif %}
+
+    <!-- Tabela de eventos -->
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title">Histórico Detalhado</h2>
+
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Evento</th>
+                            <th>Tipo</th>
+                            <th>Data</th>
+                            <th>Horário</th>
+                            <th>Local</th>
+                            <th>Peso</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        {% for aloc in alocacoes %}
+
+                            <tr>
+                                <td class="font-medium">{{ aloc.evento.titulo }}</td>
+                                <td>
+                                    <span class="badge badge-sm 
+                                        {% if aloc.evento.tipo == 'Periódico' %}badge-info{% endif %} 
+                                        {% if aloc.evento.tipo == 'Esporádico' %}badge-error{% endif %}">{{ aloc.evento.tipo }}</span>
+                                    </td>
+                                    <td>{{ aloc.evento.data_hora_inicio|date:"d/m/Y" }}</td>
+                                    <td>{{ aloc.evento.data_hora_inicio|time:"H:i" }} — {{ aloc.evento.data_hora_fim|time:"H:i" }}</td>
+                                    <td>{{ aloc.evento.get_local_definitivo }}</td>
+                                    <td>{{ aloc.evento.peso_presenca }}</td>
+                                    <td>
+                                        <span class="badge badge-sm 
+                                            {% if aloc.status == 'Presente' %}badge-success{% endif %} 
+                                            {% if aloc.status == 'Ausente' %}badge-error{% endif %} 
+                                            {% if aloc.status == 'Previsto' %}badge-warning{% endif %} 
+                                            {% if aloc.status == 'Dispensado' %}badge-info{% endif %}">{{ aloc.status }}</span>
+                                        </td>
+                                    </tr>
+
+                                {% empty %}
+
+                                    <tr>
+                                        <td colspan="7" class="text-center text-base-content/50 py-8">Nenhuma alocação encontrada.</td>
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        {% endblock content %}

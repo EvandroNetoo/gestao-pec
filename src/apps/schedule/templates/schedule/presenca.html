@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}
+
+    Presença — {{ evento.titulo }} —
+
+{% endblock title %}
+
+
+{% block content %}
+
+    <div class="navbar bg-base-100 shadow-sm px-2 sm:px-4">
+        <div class="navbar-start">
+            <a href="{% url 'home' %}" class="btn btn-ghost btn-sm sm:btn-md">← Agenda</a>
+        </div>
+        <div class="navbar-center">
+            <span class="font-bold text-sm sm:text-base">Registrar Presenças</span>
+        </div>
+        <div class="navbar-end"></div>
+    </div>
+
+    <div class="container mx-auto p-2 sm:p-4 max-w-2xl">
+        <div id="presenca-form" class="card bg-base-100 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title">{{ evento.titulo }}</h2>
+
+                <div class="text-sm text-base-content/70 flex flex-wrap gap-4 mb-4">
+                    <span>📅 {{ evento.data_hora_inicio|date:"d/m/Y" }}</span>
+                    <span>🕐 {{ evento.data_hora_inicio|time:"H:i" }} — {{ evento.data_hora_fim|time:"H:i" }}</span>
+                    <span>📍 {{ evento.get_local_definitivo }}</span>
+                </div>
+
+                {% if form.fields %}
+
+
+                    <form hx-post="{% url 'evento_presenca' evento.pk %}"
+                          hx-target="#presenca-form"
+                          hx-swap="outerHTML"
+                          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+
+                        <div class="overflow-x-auto">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Aluno</th>
+                                        <th class="text-center">Presente</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+
+                                    {% for field in form %}
+
+
+                                        <tr>
+                                            <td>
+                                                <label for="{{ field.id_for_label }}" class="cursor-pointer">{{ field.label }}</label>
+                                            </td>
+                                            <td class="text-center">
+                                                <input type="checkbox" name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="toggle toggle-success" 
+                                                    {% if field.value %}checked{% endif %} />
+                                                </td>
+                                            </tr>
+
+                                        {% endfor %}
+
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="card-actions justify-end mt-4">
+                                <button type="submit" class="btn btn-primary">Salvar Presenças</button>
+                            </div>
+                        </form>
+
+                    {% else %}
+
+
+                        <c-alert type="warning">
+                            Nenhum aluno alocado neste evento.
+                        </c-alert>
+
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+
+    {% endblock content %}

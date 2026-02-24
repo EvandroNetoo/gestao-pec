@@ -1,0 +1,97 @@
+{% extends "schedule/gestao/base_gestao.html" %}
+
+{% block title %}
+
+    Dashboard —
+
+{% endblock title %}
+
+
+{% block content %}
+
+    <h1 class="text-2xl font-bold mb-6">Dashboard</h1>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+
+        <div class="stat bg-base-100 rounded-box shadow-sm">
+            <div class="stat-title">Turmas</div>
+            <div class="stat-value text-primary">{{ total_turmas }}</div>
+            <div class="stat-actions">
+                <a href="{% url 'turma_list' %}" class="btn btn-sm">Ver todas</a>
+            </div>
+        </div>
+
+        <div class="stat bg-base-100 rounded-box shadow-sm">
+            <div class="stat-title">Oficinas</div>
+            <div class="stat-value text-secondary">{{ total_oficinas }}</div>
+            <div class="stat-actions">
+                <a href="{% url 'oficina_list' %}" class="btn btn-sm">Ver todas</a>
+            </div>
+        </div>
+
+        <div class="stat bg-base-100 rounded-box shadow-sm">
+            <div class="stat-title">Alunos</div>
+            <div class="stat-value text-accent">{{ total_alunos }}</div>
+            <div class="stat-actions">
+                <a href="{% url 'aluno_list' %}" class="btn btn-sm">Ver todos</a>
+            </div>
+        </div>
+
+        <div class="stat bg-base-100 rounded-box shadow-sm">
+            <div class="stat-title">Eventos</div>
+            <div class="stat-value text-info">{{ total_eventos }}</div>
+            <div class="stat-desc">ativos</div>
+            <div class="stat-actions">
+                <a href="{% url 'evento_list' %}" class="btn btn-sm">Ver todos</a>
+            </div>
+        </div>
+
+    </div>
+
+    {% if proximos_eventos %}
+
+
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title">Próximos Eventos</h2>
+
+                <div class="overflow-x-auto">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Título</th>
+                                <th>Tipo</th>
+                                <th>Data</th>
+                                <th>Horário</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            {% for evento in proximos_eventos %}
+
+
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'evento_detail_gestao' evento.pk %}"
+                                           class="link link-hover">{{ evento.titulo }}</a>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-sm 
+                                            {% if evento.tipo == 'Periódico' %}badge-info{% endif %} 
+                                            {% if evento.tipo == 'Esporádico' %}badge-error{% endif %}">{{ evento.tipo }}</span>
+                                    </td>
+                                    <td>{{ evento.data_hora_inicio|date:"d/m/Y" }}</td>
+                                    <td>{{ evento.data_hora_inicio|time:"H:i" }} — {{ evento.data_hora_fim|time:"H:i" }}</td>
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    {% endif %}
+
+{% endblock content %}

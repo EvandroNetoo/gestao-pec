@@ -1,0 +1,158 @@
+{% extends "schedule/gestao/base_gestao.html" %}
+
+{% block title %}
+
+    Resumo Geral —
+
+{% endblock title %}
+
+{% block content %}
+
+    <h1 class="text-2xl font-bold mb-6">Resumo Geral</h1>
+
+    <!-- Estatísticas principais -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="stat bg-base-100 rounded-box shadow-sm">
+            <div class="stat-title">Turmas</div>
+            <div class="stat-value text-primary">{{ total_turmas }}</div>
+        </div>
+        <div class="stat bg-base-100 rounded-box shadow-sm">
+            <div class="stat-title">Oficinas</div>
+            <div class="stat-value text-secondary">{{ total_oficinas }}</div>
+        </div>
+        <div class="stat bg-base-100 rounded-box shadow-sm">
+            <div class="stat-title">Alunos</div>
+            <div class="stat-value text-accent">{{ total_alunos }}</div>
+        </div>
+        <div class="stat bg-base-100 rounded-box shadow-sm">
+            <div class="stat-title">Eventos</div>
+            <div class="stat-value text-info">{{ total_eventos }}</div>
+        </div>
+    </div>
+
+    <!-- Resumo de presenças -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title">Presenças Gerais</h2>
+
+                <div class="grid grid-cols-3 gap-4 text-center mt-4">
+                    <div>
+                        <div class="text-3xl font-bold text-success">{{ total_presentes }}</div>
+                        <div class="text-sm text-base-content/70">Presentes</div>
+                    </div>
+                    <div>
+                        <div class="text-3xl font-bold text-error">{{ total_ausentes }}</div>
+                        <div class="text-sm text-base-content/70">Ausentes</div>
+                    </div>
+                    <div>
+                        <div class="text-3xl font-bold text-primary">{{ percentual_presenca }}%</div>
+                        <div class="text-sm text-base-content/70">Frequência</div>
+                    </div>
+                </div>
+
+                {% if total_alocacoes %}
+
+                    <div class="mt-4">
+                        <progress class="progress progress-success w-full"
+                                  value="{{ percentual_presenca }}"
+                                  max="100"></progress>
+                    </div>
+
+                {% endif %}
+
+            </div>
+        </div>
+
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title">Eventos por Tipo</h2>
+
+                <div class="overflow-x-auto mt-2">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th class="text-right">Quantidade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            {% for item in eventos_por_tipo %}
+
+                                <tr>
+                                    <td>
+                                        <span class="badge badge-sm 
+                                            {% if item.tipo == 'Periódico' %}badge-info{% endif %} 
+                                            {% if item.tipo == 'Esporádico' %}badge-error{% endif %}">{{ item.tipo }}</span>
+                                        </td>
+                                        <td class="text-right font-medium">{{ item.total }}</td>
+                                    </tr>
+
+                                {% empty %}
+
+                                    <tr>
+                                        <td colspan="2" class="text-center text-base-content/50">Nenhum evento.</td>
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top alunos -->
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title">Top 10 Alunos por Pontuação</h2>
+
+                <div class="overflow-x-auto">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Aluno</th>
+                                <th class="text-right">Pontos</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            {% for aluno in top_alunos %}
+
+
+                                <tr>
+                                    <td>
+                                        <span class="badge badge-sm 
+                                            {% if forloop.counter == 1 %}badge-warning{% endif %} 
+                                            {% if forloop.counter == 2 %}badge-ghost{% endif %} 
+                                            {% if forloop.counter == 3 %}badge-ghost{% endif %}">{{ forloop.counter }}</span>
+                                        </td>
+                                        <td class="font-medium">{{ aluno.nome }}</td>
+                                        <td class="text-right">
+                                            <span class="badge badge-primary">{{ aluno.pontos|default:"0" }} pts</span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'relatorio_aluno' aluno.pk %}"
+                                               class="btn btn-ghost btn-xs">Ver →</a>
+                                        </td>
+                                    </tr>
+
+                                {% empty %}
+
+                                    <tr>
+                                        <td colspan="4" class="text-center text-base-content/50 py-4">Nenhum dado de presença registrado.</td>
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        {% endblock content %}

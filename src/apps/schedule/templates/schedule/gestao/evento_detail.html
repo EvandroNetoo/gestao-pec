@@ -1,0 +1,157 @@
+{% extends "schedule/gestao/base_gestao.html" %}
+
+{% block title %}
+
+    {{ evento.titulo }} —
+
+{% endblock title %}
+
+{% block content %}
+
+    <div class="flex items-center gap-2 mb-6">
+        <a href="{% url 'evento_list' %}"
+           class="btn btn-ghost btn-sm btn-circle">←</a>
+        <h1 class="text-2xl font-bold 
+            {% if evento.cancelado %}line-through text-base-content/50{% endif %}">{{ evento.titulo }}</h1>
+        <span class="badge 
+            {% if evento.tipo == 'Periódico' %}badge-info{% endif %} 
+            {% if evento.tipo == 'Esporádico' %}badge-error{% endif %}">{{ evento.tipo }}</span>
+
+            {% if evento.cancelado %}<span class="badge badge-error badge-outline">Cancelado</span>{% endif %}
+
+        </div>
+
+        {% if evento.cancelado %}
+
+            <div role="alert" class="alert alert-warning mb-6">
+                ⚠️ Este evento está cancelado. Presenças não podem ser registradas.
+            </div>
+
+        {% endif %}
+
+        <div class="flex flex-wrap gap-2 mb-6">
+            <a href="{% url 'evento_update' evento.pk %}"
+               class="btn btn-sm btn-outline">✏️ Editar</a>
+            <form method="post"
+                  action="{% url 'evento_cancelar' evento.pk %}"
+                  class="inline">
+                {% csrf_token %}
+
+                {% if evento.cancelado %}
+
+                    <button type="submit" class="btn btn-sm btn-success btn-outline">✅ Restaurar Evento</button>
+
+                {% else %}
+
+                    <button type="submit"
+                            class="btn btn-sm btn-warning btn-outline"
+                            onclick="return confirm('Deseja cancelar este evento?')">🚫 Cancelar Evento</button>
+
+                {% endif %}
+            </form>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="stat bg-base-100 rounded-box shadow-sm">
+                <div class="stat-title">Data</div>
+                <div class="stat-value text-lg">{{ evento.data_hora_inicio|date:"d/m/Y" }}</div>
+            </div>
+            <div class="stat bg-base-100 rounded-box shadow-sm">
+                <div class="stat-title">Horário</div>
+                <div class="stat-value text-lg">{{ evento.data_hora_inicio|time:"H:i" }} — {{ evento.data_hora_fim|time:"H:i" }}</div>
+            </div>
+            <div class="stat bg-base-100 rounded-box shadow-sm">
+                <div class="stat-title">Local</div>
+                <div class="stat-value text-lg">{{ evento.get_local_definitivo }}</div>
+            </div>
+            <div class="stat bg-base-100 rounded-box shadow-sm">
+                <div class="stat-title">Peso</div>
+                <div class="stat-value text-lg text-primary">{{ evento.peso_presenca }}</div>
+            </div>
+        </div>
+
+        {% if evento.oficinas.all %}
+
+            <div class="mb-4 flex flex-wrap gap-2 items-center">
+                <span class="font-semibold text-sm">Oficinas:</span>
+
+                {% for oficina in evento.oficinas.all %}<span class="badge badge-outline">{{ oficina.nome }}</span>{% endfor %}
+
+            </div>
+
+        {% endif %}
+
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
+                    <h2 class="card-title">Alunos Alocados</h2>
+
+                    {% if not evento.cancelado %}
+
+                        <div class="flex gap-2">
+                            <a href="{% url 'evento_alocar' evento.pk %}"
+                               class="btn btn-primary btn-sm">+ Alocar Alunos</a>
+                            <a href="{% url 'evento_presenca' evento.pk %}"
+                               class="btn btn-outline btn-sm">📝 Registrar Presenças</a>
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Aluno</th>
+                                <th>Turma</th>
+                                <th>Status</th>
+                                <th class="text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            {% for aloc in alocacoes %}
+
+
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'aluno_detail' aloc.aluno.pk %}" class="link link-hover">{{ aloc.aluno.nome }}</a>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-ghost badge-sm">{{ aloc.aluno.turma }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-sm 
+                                            {% if aloc.status == 'Presente' %}badge-success{% endif %} 
+                                            {% if aloc.status == 'Ausente' %}badge-error{% endif %} 
+                                            {% if aloc.status == 'Previsto' %}badge-warning{% endif %} 
+                                            {% if aloc.status == 'Dispensado' %}badge-info{% endif %}">{{ aloc.status }}</span>
+                                        </td>
+                                        <td class="text-right">
+                                            <form method="post"
+                                                  action="{% url 'alocacao_remover' aloc.pk %}"
+                                                  class="inline">
+                                                {% csrf_token %}
+                                                <button type="submit"
+                                                        class="btn btn-ghost btn-xs text-error"
+                                                        title="Remover alocação">🗑️</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+
+                                {% empty %}
+
+                                    <tr>
+                                        <td colspan="4" class="text-center text-base-content/50 py-4">Nenhum aluno alocado.</td>
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        {% endblock content %}

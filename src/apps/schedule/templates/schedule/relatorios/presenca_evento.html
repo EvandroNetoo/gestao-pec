@@ -1,0 +1,116 @@
+{% extends "schedule/gestao/base_gestao.html" %}
+
+{% block title %}
+
+    Relatório por Evento —
+
+{% endblock title %}
+
+
+{% block content %}
+
+    <h1 class="text-2xl font-bold mb-6">Relatório de Presenças por Evento</h1>
+
+    <div class="card bg-base-100 shadow-sm mb-6">
+        <div class="card-body">
+
+            <form method="get" class="flex flex-col sm:flex-row gap-2">
+                <select name="tipo" class="select select-neutral">
+                    <option value="">Todos os tipos</option>
+
+                    {% for value, label in tipos %}
+
+
+                        <option value="{{ value }}" 
+                            {% if tipo_filtro == value %}selected{% endif %}>{{ label }}</option>
+
+                    {% endfor %}
+
+                </select>
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+
+                {% if tipo_filtro %}
+
+                    <a href="{% url 'relatorio_evento' %}" class="btn btn-ghost">Limpar</a>
+
+                {% endif %}
+
+            </form>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Evento</th>
+                            <th>Tipo</th>
+                            <th>Data</th>
+                            <th class="text-center">Alocados</th>
+                            <th class="text-center">Presentes</th>
+                            <th class="text-center">Ausentes</th>
+                            <th class="text-center">Frequência</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        {% for evento in eventos %}
+
+
+                            <tr>
+                                <td class="font-medium">
+                                    <a href="{% url 'evento_detail_gestao' evento.pk %}"
+                                       class="link link-hover">{{ evento.titulo }}</a>
+                                </td>
+                                <td>
+                                    <span class="badge badge-sm 
+                                        {% if evento.tipo == 'Periódico' %}badge-info{% endif %} 
+                                        {% if evento.tipo == 'Esporádico' %}badge-error{% endif %}">{{ evento.tipo }}</span>
+                                </td>
+                                <td>{{ evento.data_hora_inicio|date:"d/m/Y" }}</td>
+                                <td class="text-center">{{ evento.total_alocados }}</td>
+                                <td class="text-center">
+                                    <span class="badge badge-success badge-sm">{{ evento.total_presentes }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge badge-error badge-sm">{{ evento.total_ausentes }}</span>
+                                </td>
+                                <td class="text-center">
+
+                                    {% if evento.total_alocados > 0 %}
+
+
+                                        {% widthratio evento.total_presentes evento.total_alocados 100 as pct %}
+
+                                        <div class="flex items-center gap-2 justify-center">
+                                            <progress class="progress progress-success w-16" value="{{ pct }}" max="100"></progress>
+                                            <span class="text-sm">{{ pct }}%</span>
+                                        </div>
+
+                                    {% else %}
+
+
+                                        <span class="text-base-content/40">—</span>
+
+                                    {% endif %}
+
+                                </td>
+                            </tr>
+
+                        {% empty %}
+
+                            <tr>
+                                <td colspan="7" class="text-center text-base-content/50 py-8">Nenhum evento encontrado.</td>
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}

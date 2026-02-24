@@ -1,0 +1,87 @@
+{% extends "schedule/gestao/base_gestao.html" %}
+
+{% block title %}{{ aluno.nome }} — {% endblock title %}
+
+{% block content %}
+
+    <div class="flex items-center gap-2 mb-6">
+        <a href="{% url 'aluno_list' %}" class="btn btn-ghost btn-sm btn-circle">←</a>
+        <h1 class="text-2xl font-bold">{{ aluno.nome }}</h1>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <div class="stat bg-base-100 rounded-box shadow-sm">
+            <div class="stat-title">Turma</div>
+            <div class="stat-value text-lg">{{ aluno.turma }}</div>
+        </div>
+        <div class="stat bg-base-100 rounded-box shadow-sm">
+            <div class="stat-title">Oficinas Fixas</div>
+            <div class="stat-value text-lg">
+
+                {% for o in aluno.oficinas_fixas.all %}
+                    <span class="badge badge-sm badge-outline">{{ o.nome }}</span>
+                {% empty %}
+                    <span class="text-base-content/50">—</span>
+                {% endfor %}
+
+            </div>
+        </div>
+        <div class="stat bg-base-100 rounded-box shadow-sm">
+            <div class="stat-title">Total Presenças</div>
+            <div class="stat-value text-primary">{{ aluno.total_presencas }} pts</div>
+            <div class="stat-actions">
+                <a href="{% url 'relatorio_aluno' aluno.pk %}" class="btn btn-sm">Ver relatório</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+            <h2 class="card-title">Histórico de Alocações</h2>
+
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Evento</th>
+                            <th>Data</th>
+                            <th>Status</th>
+                            <th>Peso</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        {% for aloc in alocacoes %}
+
+                            <tr>
+                                <td>{{ aloc.evento.titulo }}</td>
+                                <td>{{ aloc.evento.data_hora_inicio|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    <span class="badge badge-sm
+                                        {% if aloc.status == 'Presente' %}badge-success{% endif %}
+                                        {% if aloc.status == 'Ausente' %}badge-error{% endif %}
+                                        {% if aloc.status == 'Previsto' %}badge-warning{% endif %}
+                                        {% if aloc.status == 'Dispensado' %}badge-info{% endif %}">
+                                        {{ aloc.status }}
+                                    </span>
+                                </td>
+                                <td>{{ aloc.evento.peso_presenca }}</td>
+                            </tr>
+
+                        {% empty %}
+
+                            <tr>
+                                <td colspan="4" class="text-center text-base-content/50 py-4">
+                                    Nenhuma alocação.
+                                </td>
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}

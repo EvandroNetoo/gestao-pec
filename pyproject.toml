@@ -1,0 +1,84 @@
+[project]
+name = "pec"
+version = "0.1.0"
+requires-python = ">=3.14"
+
+dependencies = [
+    "dj-database-url>=3.1.2",
+    "django>=5.2,<6.0",
+    "django-cotton>=2.6.1",
+    "django-htmx>=1.27.0",
+    "django-widget-tweaks>=1.5.1",
+    "pydantic-settings>=2.13.1",
+]
+
+[dependency-groups]
+dev = [
+    "django-stubs[compatible-mypy]>=5.2.9",
+    "djlint>=1.36.4",
+    "mypy>=1.19.1",
+    "ruff>=0.15.1",
+    "taskipy>=1.14.1",
+]
+
+[tool.taskipy.tasks]
+run = "python manage.py runserver"
+makemigrations = "python manage.py makemigrations"
+migrate = "python manage.py migrate"
+lint = "ruff check . && djlint . --quiet && mypy ."
+format = "ruff check . --fix && ruff format . && djlint . --reformat --quiet"
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main"]
+
+[tool.django-stubs]
+django_settings_module = "core.settings"
+
+[tool.ruff]
+line-length = 79
+extend-exclude = ["migrations", "postgres_data", "frontend"]
+
+
+[tool.ruff.lint]
+preview = true
+select = [
+    "E",   # pycodestyle (PEP8 e estilo básico)
+    "F",   # pyflakes (erros semânticos comuns)
+    "B",   # bugbear (bugs potenciais)
+    "UP",  # pyupgrade (uso de sintaxe moderna)
+    "SIM", # simplificações de código
+    "I",   # isort (ordem de imports)
+    "DJ",  # regras específicas de Django
+    "ASYNC", # regras para código assíncrono
+    "Q",   # flake8-quotes (estilo de aspas)
+    "S",   # bandit (segurança)
+    "W",   # pycodestyle (avisos de estilo)
+]
+
+ignore = ["E501"]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "single"
+
+[tool.ruff.format]
+preview = true
+quote-style = "single"
+
+[tool.djlint]
+max_blank_lines = 1
+indent = 4
+tabs = true
+format_css = true
+format_js = true
+use_gitignore = true
+space_around_blocks = true
+blank_line_before_tag = "include,block,endblock,crispy,if,else,endif,for,endfor,comment,endcomment,with,endwith"
+blank_line_after_tag = "include,block,endblock,crispy,if,else,for,comment,endcomment,with,endwith,load,extends"
+ignore = "H005,H006,H007,H008,H009,H010,H011,H012,H013,H014,H015,H016,H017,H018,H019,H020,H021,H022,H023,H024,H025,H026,H027,H028,H029,H030,H031,H033,H035,H036,H037,J004,J018,T001,T002,T003,T027,T028,T032,T034"
+custom_html = "c-"
+
+[tool.djlint.css]
+indent_size = 4
+
+[tool.djlint.js]
+indent_size = 4

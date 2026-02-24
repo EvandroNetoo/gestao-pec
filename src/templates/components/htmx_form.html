@@ -1,0 +1,10 @@
+<c-vars url target="#form" />
+<form autocomplete="off"
+      hx-post="{{ url }}"
+      hx-target="{{ target }}"
+      hx-disabled-elt="find button[type=submit]"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+      {{ attrs }}>
+
+    {{ slot }}
+</form>

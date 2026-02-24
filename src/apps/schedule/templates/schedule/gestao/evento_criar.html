@@ -1,0 +1,177 @@
+{% extends "schedule/gestao/base_gestao.html" %}
+
+{% load widget_tweaks %}
+
+{% block title %}
+
+    {{ page_title }} —
+
+{% endblock title %}
+
+
+{% block content %}
+
+    <div class="max-w-2xl mx-auto">
+        <div class="flex items-center gap-2 mb-6">
+            <a href="{{ back_url }}" class="btn btn-ghost btn-sm btn-circle">←</a>
+            <h1 class="text-2xl font-bold">{{ page_title }}</h1>
+        </div>
+
+        {% if form.non_field_errors %}
+
+            <div role="alert" class="alert alert-error alert-soft text-sm mb-4">
+
+                {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+
+        {% endif %}
+
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    {# ── Título ─────────────────────────── #}
+                    <fieldset class="fieldset">
+                        <label for="id_titulo" class="fieldset-legend">
+                            <span>Título</span> <span class="text-error">*</span>
+                        </label>
+                        {{ form.titulo|add_class:'input input-neutral w-full' }}
+
+                        {% for error in form.titulo.errors %}<p class="text-error">{{ error }}</p>{% endfor %}
+                    </fieldset>
+
+                    {# ── Tipo ───────────────────────────── #}
+                    <fieldset class="fieldset">
+                        <label for="id_tipo" class="fieldset-legend">
+                            <span>Tipo</span> <span class="text-error">*</span>
+                        </label>
+                        {{ form.tipo|add_class:'select select-neutral w-full' }}
+
+                        {% for error in form.tipo.errors %}<p class="text-error">{{ error }}</p>{% endfor %}
+                    </fieldset>
+
+                    {# ── Data Inicial ───────────────────── #}
+                    <fieldset class="fieldset">
+                        <label for="id_data" class="fieldset-legend">
+                            <span>Data inicial</span> <span class="text-error">*</span>
+                        </label>
+                        {{ form.data|add_class:'input input-neutral w-full' }}
+
+                        {% for error in form.data.errors %}<p class="text-error">{{ error }}</p>{% endfor %}
+                    </fieldset>
+
+                    {# ── Horários ───────────────────────── #}
+                    <div class="grid grid-cols-2 gap-4">
+                        <fieldset class="fieldset">
+                            <label for="id_hora_inicio" class="fieldset-legend">
+                                <span>Hora de início</span> <span class="text-error">*</span>
+                            </label>
+                            {{ form.hora_inicio|add_class:'input input-neutral w-full' }}
+
+                            {% for error in form.hora_inicio.errors %}<p class="text-error">{{ error }}</p>{% endfor %}
+                        </fieldset>
+                        <fieldset class="fieldset">
+                            <label for="id_hora_fim" class="fieldset-legend">
+                                <span>Hora de fim</span> <span class="text-error">*</span>
+                            </label>
+                            {{ form.hora_fim|add_class:'input input-neutral w-full' }}
+
+                            {% for error in form.hora_fim.errors %}<p class="text-error">{{ error }}</p>{% endfor %}
+                        </fieldset>
+                    </div>
+
+                    {# ── Campos de Recorrência (visíveis apenas para Periódico) ── #}
+                    <div id="recorrencia-fields"
+                         class="hidden border border-base-300 rounded-box p-4 mt-2 space-y-2 bg-base-200/30">
+                        <p class="text-sm font-semibold text-base-content/70 mb-2">Opções de Recorrência</p>
+
+                        <fieldset class="fieldset">
+                            <label for="id_periodo" class="fieldset-legend">
+                                <span>Período</span> <span class="text-error">*</span>
+                            </label>
+                            {{ form.periodo|add_class:'select select-neutral w-full' }}
+
+                            {% for error in form.periodo.errors %}<p class="text-error">{{ error }}</p>{% endfor %}
+                        </fieldset>
+
+                        <fieldset class="fieldset hidden" id="intervalo-field">
+                            <label for="id_intervalo_dias" class="fieldset-legend">
+                                <span>Intervalo em dias</span> <span class="text-error">*</span>
+                            </label>
+                            {{ form.intervalo_dias|add_class:'input input-neutral w-full' }}
+
+                            {% for error in form.intervalo_dias.errors %}<p class="text-error">{{ error }}</p>{% endfor %}
+                        </fieldset>
+
+                        <fieldset class="fieldset">
+                            <label for="id_data_fim_recorrencia" class="fieldset-legend">
+                                <span>Data final da recorrência</span> <span class="text-error">*</span>
+                            </label>
+                            {{ form.data_fim_recorrencia|add_class:'input input-neutral w-full' }}
+
+                            {% for error in form.data_fim_recorrencia.errors %}<p class="text-error">{{ error }}</p>{% endfor %}
+                        </fieldset>
+                    </div>
+
+                    {# ── Local ──────────────────────────── #}
+                    <fieldset class="fieldset">
+                        <label for="id_local" class="fieldset-legend">
+                            <span>Local</span>
+                        </label>
+                        {{ form.local|add_class:'input input-neutral w-full' }}
+                        <p class="label">Se vazio, usa o local padrão da primeira oficina</p>
+                    </fieldset>
+
+                    {# ── Peso ───────────────────────────── #}
+                    <fieldset class="fieldset">
+                        <label for="id_peso_presenca" class="fieldset-legend">
+                            <span>Peso da presença</span> <span class="text-error">*</span>
+                        </label>
+                        {{ form.peso_presenca|add_class:'input input-neutral w-full' }}
+                    </fieldset>
+
+                    {# ── Oficinas ───────────────────────── #}
+                    <fieldset class="fieldset">
+                        <label class="fieldset-legend">
+                            <span>Oficinas</span>
+                        </label>
+                        {{ form.oficinas }}
+                    </fieldset>
+
+                    <div class="card-actions justify-end mt-6">
+                        <a href="{{ back_url }}" class="btn btn-ghost">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">Criar Evento(s)</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tipoSelect = document.getElementById('id_tipo');
+            const periodoSelect = document.getElementById('id_periodo');
+            const recorrenciaFields = document.getElementById('recorrencia-fields');
+            const intervaloField = document.getElementById('intervalo-field');
+
+            function toggleRecorrencia() {
+                const isPeriodico = tipoSelect.value === 'Periódico';
+                recorrenciaFields.classList.toggle('hidden', !isPeriodico);
+            }
+
+            function toggleIntervalo() {
+                const isPersonalizado = periodoSelect.value === 'personalizado';
+                intervaloField.classList.toggle('hidden', !isPersonalizado);
+            }
+
+            tipoSelect.addEventListener('change', toggleRecorrencia);
+            periodoSelect.addEventListener('change', toggleIntervalo);
+
+            // Estado inicial
+            toggleRecorrencia();
+            toggleIntervalo();
+        });
+    </script>
+
+{% endblock content %}

@@ -1,0 +1,74 @@
+{% extends "schedule/gestao/base_gestao.html" %}
+
+{% block title %}
+
+    Semestres —
+
+{% endblock title %}
+
+
+{% block content %}
+
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <h1 class="text-2xl font-bold">Semestres</h1>
+        <a href="{% url 'semestre_create' %}" class="btn btn-primary btn-sm">+ Novo Semestre</a>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Status</th>
+                            <th>Turmas</th>
+                            <th class="text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        {% for semestre in semestres %}
+
+
+                            <tr class="
+                                {% if not semestre.ativo %}opacity-50{% endif %}">
+                                <td class="font-medium">{{ semestre.nome }}</td>
+                                <td>
+
+                                    {% if semestre.ativo %}
+
+                                        <span class="badge badge-success badge-sm">Ativo</span>
+
+                                    {% else %}
+
+                                        <span class="badge badge-ghost badge-sm">Inativo</span>
+
+                                    {% endif %}
+                                </td>
+                                <td>{{ semestre.total_turmas }}</td>
+                                <td class="text-right">
+                                    <div class="flex justify-end gap-1">
+                                        <a href="{% url 'semestre_update' semestre.pk %}"
+                                           class="btn btn-ghost btn-xs">✏️</a>
+                                        <a href="{% url 'semestre_delete' semestre.pk %}"
+                                           class="btn btn-ghost btn-xs text-error">🗑️</a>
+                                    </div>
+                                </td>
+                            </tr>
+
+                        {% empty %}
+
+                            <tr>
+                                <td colspan="4" class="text-center text-base-content/50 py-8">Nenhum semestre cadastrado.</td>
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}

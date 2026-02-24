@@ -1,0 +1,105 @@
+{% extends "schedule/gestao/base_gestao.html" %}
+
+{% block title %}Alunos — {% endblock title %}
+
+{% block content %}
+
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <h1 class="text-2xl font-bold">Alunos</h1>
+        <a href="{% url 'aluno_create' %}" class="btn btn-primary btn-sm">+ Novo Aluno</a>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+
+            <form method="get" class="flex flex-col sm:flex-row gap-2 mb-4">
+                <input type="text"
+                       name="q"
+                       value="{{ q }}"
+                       placeholder="Buscar aluno…"
+                       class="input input-sm input-neutral flex-1" />
+                <select name="turma" class="select select-sm select-neutral">
+                    <option value="">Todas as turmas</option>
+
+                    {% for turma in turmas %}
+
+                        <option value="{{ turma.pk }}"
+                                {% if turma_filtro == turma.pk|stringformat:"d" %}selected{% endif %}>
+                            {{ turma }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+                <button type="submit" class="btn btn-sm btn-neutral">Filtrar</button>
+
+                {% if q or turma_filtro %}
+                    <a href="{% url 'aluno_list' %}" class="btn btn-sm btn-ghost">Limpar</a>
+                {% endif %}
+
+            </form>
+
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Turma</th>
+                            <th>Oficinas</th>
+                            <th>Presenças</th>
+                            <th class="text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        {% for aluno in alunos %}
+
+                            <tr>
+                                <td>
+                                    <a href="{% url 'aluno_detail' aluno.pk %}" class="link link-hover font-medium">
+                                        {{ aluno.nome }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge badge-ghost badge-sm">{{ aluno.turma }}</span>
+                                </td>
+                                <td>
+                                    {% for oficina in aluno.oficinas_fixas.all %}
+                                        <span class="badge badge-sm badge-outline">{{ oficina.nome }}</span>
+                                    {% empty %}
+                                        <span class="text-base-content/40">—</span>
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    <span class="badge badge-primary badge-sm">{{ aluno.total_presencas }} pts</span>
+                                </td>
+                                <td class="text-right">
+                                    <div class="flex justify-end gap-1">
+                                        <a href="{% url 'relatorio_aluno' aluno.pk %}"
+                                           class="btn btn-ghost btn-xs"
+                                           title="Relatório">📊</a>
+                                        <a href="{% url 'aluno_update' aluno.pk %}"
+                                           class="btn btn-ghost btn-xs">✏️</a>
+                                        <a href="{% url 'aluno_delete' aluno.pk %}"
+                                           class="btn btn-ghost btn-xs text-error">🗑️</a>
+                                    </div>
+                                </td>
+                            </tr>
+
+                        {% empty %}
+
+                            <tr>
+                                <td colspan="5" class="text-center text-base-content/50 py-8">
+                                    Nenhum aluno encontrado.
+                                </td>
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}

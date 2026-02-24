@@ -1,0 +1,135 @@
+{% extends "schedule/gestao/base_gestao.html" %}
+
+{% block title %}
+
+    Eventos —
+
+{% endblock title %}
+
+
+{% block content %}
+
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <h1 class="text-2xl font-bold">Eventos</h1>
+        <a href="{% url 'evento_create' %}" class="btn btn-primary btn-sm">+ Novo Evento</a>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body">
+
+            <form method="get" class="flex flex-col sm:flex-row gap-2 mb-4">
+                <input type="text"
+                       name="q"
+                       value="{{ q }}"
+                       placeholder="Buscar evento…"
+                       class="input input-sm input-neutral flex-1" />
+                <select name="tipo" class="select select-sm select-neutral">
+                    <option value="">Todos os tipos</option>
+
+                    {% for value, label in tipos %}
+
+
+                        <option value="{{ value }}" 
+                            {% if tipo_filtro == value %}selected{% endif %}>{{ label }}</option>
+
+                    {% endfor %}
+
+                </select>
+                <button type="submit" class="btn btn-sm btn-neutral">Filtrar</button>
+
+                {% if q or tipo_filtro %}
+
+                    <a href="{% url 'evento_list' %}" class="btn btn-sm btn-ghost">Limpar</a>
+
+                {% endif %}
+
+            </form>
+
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Título</th>
+                            <th>Tipo</th>
+                            <th>Data</th>
+                            <th>Horário</th>
+                            <th>Local</th>
+                            <th>Alocados</th>
+                            <th class="text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        {% for evento in eventos %}
+
+
+                            <tr 
+                                {% if evento.cancelado %}class="opacity-50"{% endif %}>
+                                <td>
+                                    <a href="{% url 'evento_detail_gestao' evento.pk %}"
+                                       class="link link-hover font-medium">
+
+                                        {% if evento.cancelado %}
+
+                                            <s>{{ evento.titulo }}</s>
+
+                                        {% else %}
+
+                                            {{ evento.titulo }}
+
+                                        {% endif %}
+                                    </a>
+                                </td>
+                                <td>
+
+                                    {% if evento.cancelado %}
+
+                                        <span class="badge badge-sm badge-error badge-outline">Cancelado</span>
+
+                                    {% else %}
+
+                                        <span class="badge badge-sm 
+                                            {% if evento.tipo == 'Periódico' %}badge-info{% endif %} 
+                                            {% if evento.tipo == 'Esporádico' %}badge-error{% endif %}">{{ evento.tipo }}</span>
+
+                                    {% endif %}
+                                </td>
+                                <td>{{ evento.data_hora_inicio|date:"d/m/Y" }}</td>
+                                <td>{{ evento.data_hora_inicio|time:"H:i" }} — {{ evento.data_hora_fim|time:"H:i" }}</td>
+                                <td>{{ evento.get_local_definitivo }}</td>
+                                <td>
+                                    <span class="badge badge-neutral badge-sm">{{ evento.total_alocados }}</span>
+                                </td>
+                                <td class="text-right">
+                                    <div class="flex justify-end gap-1">
+
+                                        {% if not evento.cancelado %}
+
+                                            <a href="{% url 'evento_presenca' evento.pk %}"
+                                               class="btn btn-ghost btn-xs"
+                                               title="Presença">📝</a>
+
+                                        {% endif %}
+                                        <a href="{% url 'evento_update' evento.pk %}"
+                                           class="btn btn-ghost btn-xs">✏️</a>
+                                        <a href="{% url 'evento_delete' evento.pk %}"
+                                           class="btn btn-ghost btn-xs text-error">🗑️</a>
+                                    </div>
+                                </td>
+                            </tr>
+
+                        {% empty %}
+
+                            <tr>
+                                <td colspan="7" class="text-center text-base-content/50 py-8">Nenhum evento encontrado.</td>
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}
