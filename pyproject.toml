@@ -10,6 +10,7 @@ dependencies = [
     "django-htmx>=1.27.0",
     "django-widget-tweaks>=1.5.1",
     "gunicorn>=25.1.0",
+    "psycopg[binary]>=3.3.3",
     "pydantic-settings>=2.13.1",
     "whitenoise>=6.11.0",
 ]
