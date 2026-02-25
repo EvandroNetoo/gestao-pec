@@ -55,9 +55,10 @@ class OficinaForm(forms.ModelForm):
         self.fields['alunos'].queryset = (
             Aluno.objects
             .filter(turma__semestre__ativo=True)
-            .select_related('turma', 'turma__semestre')
+            .select_related('turma')
             .order_by('turma__nome', 'nome')
         )
+        self.fields['alunos'].label_from_instance = lambda aluno: f'{aluno.nome} ({aluno.turma.nome})'
         if self.instance.pk:
             self.fields['alunos'].initial = self.instance.alunos.values_list(
                 'pk', flat=True
