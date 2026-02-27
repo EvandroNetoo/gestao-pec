@@ -19,107 +19,113 @@
 
     <div class="navbar bg-base-100 shadow-sm px-2 sm:px-4">
         <div class="navbar-start gap-2">
-            <span class="text-lg sm:text-xl font-bold">📅 Agenda PEC</span>
-            <a href="{% url 'dashboard' %}" class="btn btn-ghost">Gestão</a>
-        </div>
-        <div class="navbar-end">
-            <div class="flex flex-wrap gap-1 sm:gap-2">
-                <span class="badge badge-xs sm:badge-sm"
-                      style="background:#2563eb;
-                             color:#fff">Periódico</span>
-                <span class="badge badge-xs sm:badge-sm"
-                      style="background:#c90c0f;
-                             color:#fff">Esporádico</span>
+            <span class="text-lg sm:text-xl whitespace-nowrap font-bold flex gap-2 items-center">
+                <a href="{% url 'dashboard' %}" class="btn btn-ghost">Gestão</a>
+            </div>
+            <div class="navbar-center gap-2">
+                <img class="w-6 h-6 rounded"
+                     src="{% static 'img/logo_gestao_pec.png' %}"
+                     alt="Logo">
+                <span class="font-bold text-base">Agenda PEC</span>
+            </div>
+            <div class="navbar-end">
+                <div class="flex flex-wrap gap-1 sm:gap-2">
+                    <span class="badge badge-xs sm:badge-sm"
+                          style="background:#2563eb;
+                                 color:#fff">Periódico</span>
+                    <span class="badge badge-xs sm:badge-sm"
+                          style="background:#c90c0f;
+                                 color:#fff">Esporádico</span>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="container mx-auto p-2 sm:p-4 max-w-6xl">
-        <div id="calendar" class="bg-base-100 rounded-box p-2 sm:p-4 shadow-sm"></div>
-    </div>
+        <div class="container mx-auto p-2 sm:p-4 max-w-6xl">
+            <div id="calendar" class="bg-base-100 rounded-box p-2 sm:p-4 shadow-sm"></div>
+        </div>
 
-    <div id="modal-container"></div>
+        <div id="modal-container"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
-    <script>
-        (function() {
-            const calendarEl = document.getElementById('calendar');
-            if (!calendarEl || calendarEl.hasAttribute('data-fc-initialized')) return;
-            calendarEl.setAttribute('data-fc-initialized', 'true');
+        <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
+        <script>
+            (function() {
+                const calendarEl = document.getElementById('calendar');
+                if (!calendarEl || calendarEl.hasAttribute('data-fc-initialized')) return;
+                calendarEl.setAttribute('data-fc-initialized', 'true');
 
-            const isMobile = window.innerWidth < 768;
+                const isMobile = window.innerWidth < 768;
 
-            const calendar = new FullCalendar.Calendar(calendarEl, {
-                allDaySlot: false,
-                initialView: 'dayGridMonth',
-                locale: 'pt-br',
-                headerToolbar:
-                //   ? { left: 'prev,next', center: 'title', right: 'listWeek,dayGridMonth' } : 
-                {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-                },
-                buttonText: {
-                    today: 'Hoje',
-                    month: 'Mês',
-                    week: 'Semana',
-                    day: 'Dia',
-                    list: 'Lista'
-                },
-                events: '{% url "api_eventos" %}',
-                eventClick: function(info) {
-                    info.jsEvent.preventDefault();
-                    htmx.ajax(
-                        'GET',
-                        '/evento/' + info.event.id + '/detalhes/', {
-                            target: '#modal-container',
-                            swap: 'innerHTML'
+                const calendar = new FullCalendar.Calendar(calendarEl, {
+                    allDaySlot: false,
+                    initialView: 'dayGridMonth',
+                    locale: 'pt-br',
+                    headerToolbar:
+                    //   ? { left: 'prev,next', center: 'title', right: 'listWeek,dayGridMonth' } : 
+                    {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+                    },
+                    buttonText: {
+                        today: 'Hoje',
+                        month: 'Mês',
+                        week: 'Semana',
+                        day: 'Dia',
+                        list: 'Lista'
+                    },
+                    events: '{% url "api_eventos" %}',
+                    eventClick: function(info) {
+                        info.jsEvent.preventDefault();
+                        htmx.ajax(
+                            'GET',
+                            '/evento/' + info.event.id + '/detalhes/', {
+                                target: '#modal-container',
+                                swap: 'innerHTML'
+                            }
+                        );
+                    },
+                    windowResize: function(view) {
+                        const mobile = window.innerWidth < 768;
+                        if (mobile && calendar.view.type === 'dayGridMonth') {
+                            calendar.changeView('listWeek');
                         }
-                    );
-                },
-                windowResize: function(view) {
-                    const mobile = window.innerWidth < 768;
-                    if (mobile && calendar.view.type === 'dayGridMonth') {
-                        calendar.changeView('listWeek');
-                    }
-                },
-                height: 'auto',
-                navLinks: true,
-                editable: false,
-                dayMaxEvents: isMobile ? 2 : true,
-                titleFormat: isMobile ? {
-                    month: 'short',
-                    year: 'numeric'
-                } : {
-                    month: 'long',
-                    year: 'numeric'
-                },
-            });
-            calendar.render();
-        })();
-    </script>
+                    },
+                    height: 'auto',
+                    navLinks: true,
+                    editable: false,
+                    dayMaxEvents: isMobile ? 2 : true,
+                    titleFormat: isMobile ? {
+                        month: 'short',
+                        year: 'numeric'
+                    } : {
+                        month: 'long',
+                        year: 'numeric'
+                    },
+                });
+                calendar.render();
+            })();
+        </script>
 
-    <style>
-        @media (max-width: 767px) {
-            .fc .fc-toolbar {
-                flex-wrap: wrap;
-                gap: 0.25rem;
+        <style>
+            @media (max-width: 767px) {
+                .fc .fc-toolbar {
+                    flex-wrap: wrap;
+                    gap: 0.25rem;
+                }
+
+                .fc .fc-toolbar-title {
+                    font-size: 1rem !important;
+                }
+
+                .fc .fc-button {
+                    padding: 0.2rem 0.5rem;
+                    font-size: 0.75rem;
+                }
+
+                .fc-col-header-cell-cushion {
+                    font-size: 0.75rem;
+                }
             }
+        </style>
 
-            .fc .fc-toolbar-title {
-                font-size: 1rem !important;
-            }
-
-            .fc .fc-button {
-                padding: 0.2rem 0.5rem;
-                font-size: 0.75rem;
-            }
-
-            .fc-col-header-cell-cushion {
-                font-size: 0.75rem;
-            }
-        }
-    </style>
-
-{% endblock content %}
+    {% endblock content %}
