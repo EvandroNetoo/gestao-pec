@@ -450,6 +450,8 @@ class OficinaUpdateView(HtmxFormViewMixin, UpdateView):
         return ctx
 
     def form_valid(self, form):
+        # A sincronização de alocações em eventos futuros é feita
+        # automaticamente pelo signal m2m_changed em Aluno.oficinas_fixas.
         messages.success(self.request, 'Oficina atualizada com sucesso.')
         return super().form_valid(form)
 
@@ -751,6 +753,8 @@ class EventoCreateView(View):
                     current += timedelta(days=intervalo)
 
             # Criar eventos
+            # A alocação de alunos é feita automaticamente pelo signal
+            # m2m_changed em Evento.oficinas ao chamar evento.oficinas.set().
             oficinas = d.get('oficinas')
             criados = 0
             for dt in datas:
@@ -786,6 +790,24 @@ class EventoUpdateView(HtmxFormViewMixin, UpdateView):
     template_name = 'schedule/gestao/form.html'
     success_url = reverse_lazy('evento_list')
 
+    def _count_futuros(self, titulo):
+        from django.utils import timezone
+
+        return (
+            Evento.objects
+            .filter(
+                titulo=titulo,
+                data_hora_inicio__gt=timezone.now(),
+            )
+            .exclude(pk=self.object.pk)
+            .count()
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['total_futuros'] = self._count_futuros(self.object.titulo)
+        return kwargs
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['page_title'] = f'Editar Evento: {self.object}'
@@ -793,8 +815,63 @@ class EventoUpdateView(HtmxFormViewMixin, UpdateView):
         return ctx
 
     def form_valid(self, form):
+        from django.utils import timezone
+
+        titulo_original = self.object.titulo
+        aplicar_futuros = form.cleaned_data.get('aplicar_futuros', False)
+
+        # Salva o evento. O signal m2m_changed em Evento.oficinas sincroniza
+        # automaticamente as alocações quando as oficinas mudam.
+        response = super().form_valid(form)
+
+        if aplicar_futuros:
+            nova_hora_inicio = form.cleaned_data['data_hora_inicio'].time()
+            nova_hora_fim = form.cleaned_data['data_hora_fim'].time()
+            novo_titulo = form.cleaned_data['titulo']
+            novo_tipo = form.cleaned_data['tipo']
+            novo_local = form.cleaned_data.get('local') or ''
+            novo_peso = form.cleaned_data['peso_presenca']
+            novo_cancelado = form.cleaned_data.get('cancelado', False)
+            novas_oficinas = form.cleaned_data.get('oficinas')
+
+            futuros = list(
+                Evento.objects.filter(
+                    titulo=titulo_original,
+                    data_hora_inicio__gt=timezone.now(),
+                ).exclude(pk=self.object.pk)
+            )
+
+            for futuro in futuros:
+                futuro.titulo = novo_titulo
+                futuro.tipo = novo_tipo
+                futuro.local = novo_local
+                futuro.peso_presenca = novo_peso
+                futuro.cancelado = novo_cancelado
+                futuro.data_hora_inicio = futuro.data_hora_inicio.replace(
+                    hour=nova_hora_inicio.hour,
+                    minute=nova_hora_inicio.minute,
+                    second=0,
+                    microsecond=0,
+                )
+                futuro.data_hora_fim = futuro.data_hora_fim.replace(
+                    hour=nova_hora_fim.hour,
+                    minute=nova_hora_fim.minute,
+                    second=0,
+                    microsecond=0,
+                )
+                futuro.save()
+                # O signal m2m_changed sincroniza as alocações ao set().
+                if novas_oficinas is not None:
+                    futuro.oficinas.set(novas_oficinas)
+
+            if futuros:
+                messages.info(
+                    self.request,
+                    f'{len(futuros)} evento(s) futuro(s) também atualizado(s).',
+                )
+
         messages.success(self.request, 'Evento atualizado com sucesso.')
-        return super().form_valid(form)
+        return response
 
 
 class EventoDeleteView(DeleteView):
@@ -831,69 +908,127 @@ class EventoDetailView(DetailView):
 
 
 class EventoAlocarView(View):
-    """Aloca múltiplos alunos a um evento."""
+    """Página de gerenciamento de alunos de um evento (add + remove)."""
+
+    template_name = 'schedule/gestao/evento_alunos.html'
+
+    def _context(self, evento, form):
+        alocacoes = evento.alocacoes.select_related(
+            'aluno', 'aluno__turma'
+        ).order_by('aluno__turma__nome', 'aluno__nome')
+        from django.utils import timezone
+
+        total_futuros = (
+            Evento.objects
+            .filter(
+                titulo=evento.titulo,
+                data_hora_inicio__gt=timezone.now(),
+            )
+            .exclude(pk=evento.pk)
+            .count()
+        )
+        return {
+            'evento': evento,
+            'form': form,
+            'alocacoes': alocacoes,
+            'total_futuros': total_futuros,
+        }
 
     def get(self, request, pk):
         evento = get_object_or_404(Evento, pk=pk)
         form = AlocarAlunosForm(evento=evento)
-        return render(
-            request,
-            'schedule/gestao/form.html',
-            {
-                'form': form,
-                'page_title': f'Alocar Alunos — {evento.titulo}',
-                'back_url': reverse_lazy(
-                    'evento_detail_gestao', kwargs={'pk': pk}
-                ),
-            },
-        )
+        return render(request, self.template_name, self._context(evento, form))
 
     def post(self, request, pk):
+        from django.utils import timezone
+
         evento = get_object_or_404(Evento, pk=pk)
         form = AlocarAlunosForm(request.POST, evento=evento)
         if form.is_valid():
-            alunos = form.cleaned_data['alunos']
+            alunos = list(form.cleaned_data['alunos'])
+            propagar_futuros = request.POST.get('propagar_futuros') == '1'
+
+            # Eventos em que aplicar (sempre este + futuros se solicitado)
+            eventos_alvo = [evento]
+            if propagar_futuros:
+                eventos_alvo += list(
+                    Evento.objects.filter(
+                        titulo=evento.titulo,
+                        data_hora_inicio__gt=timezone.now(),
+                    ).exclude(pk=evento.pk)
+                )
+
             criados = 0
             erros = []
-            for aluno in alunos:
-                aloc = AlocacaoPresenca(
-                    evento=evento,
-                    aluno=aluno,
-                    status=AlocacaoPresenca.Status.PREVISTO,
+            for ev in eventos_alvo:
+                ja_alocados = set(
+                    ev.alocacoes.values_list('aluno_id', flat=True)
                 )
-                try:
-                    aloc.save()
-                    criados += 1
-                except Exception as e:
-                    erros.append(f'{aluno.nome}: {e}')
+                for aluno in alunos:
+                    if aluno.pk in ja_alocados:
+                        continue
+                    aloc = AlocacaoPresenca(
+                        evento=ev,
+                        aluno=aluno,
+                        status=AlocacaoPresenca.Status.PREVISTO,
+                    )
+                    try:
+                        aloc.save()
+                        criados += 1
+                    except Exception as e:
+                        if ev.pk == evento.pk:
+                            erros.append(f'{aluno.nome}: {e}')
             if criados:
                 messages.success(
                     request,
-                    f'{criados} aluno(s) alocado(s) com sucesso.',
+                    f'{criados} alocação(iões) criada(s)'
+                    + (
+                        f' em {len(eventos_alvo)} evento(s).'
+                        if propagar_futuros
+                        else '.'
+                    ),
                 )
             for erro in erros:
                 messages.error(request, erro)
-            return HttpResponseClientRedirect(
-                str(reverse_lazy('evento_detail_gestao', kwargs={'pk': pk}))
-            )
-        return render(
-            request,
-            'components/django_form/index.html',
-            {'form': form},
-        )
+            return redirect('evento_alocar', pk=pk)
+        return render(request, self.template_name, self._context(evento, form))
 
 
 class AlocacaoRemoverView(View):
-    """Remove uma alocação de um evento (HTMX)."""
+    """Remove uma alocação de um evento."""
 
     def post(self, request, pk):
+        from django.utils import timezone
+
         alocacao = get_object_or_404(
-            AlocacaoPresenca.objects.select_related('evento'), pk=pk
+            AlocacaoPresenca.objects.select_related('evento', 'aluno'),
+            pk=pk,
         )
-        evento_pk = alocacao.evento.pk
+        evento = alocacao.evento
+        aluno = alocacao.aluno
+        propagar_futuros = request.POST.get('propagar_futuros') == '1'
         alocacao.delete()
-        messages.success(request, 'Alocação removida.')
-        return redirect('evento_detail_gestao', pk=evento_pk)
+
+        if propagar_futuros:
+            # Remove alocações Previsto do mesmo aluno em eventos futuros
+            # com o mesmo título
+            removidos, _ = AlocacaoPresenca.objects.filter(
+                aluno=aluno,
+                evento__titulo=evento.titulo,
+                evento__data_hora_inicio__gt=timezone.now(),
+                status=AlocacaoPresenca.Status.PREVISTO,
+            ).delete()
+            messages.success(
+                request,
+                f'Alocação removida e propagada para {removidos} evento(s) futuro(s).',
+            )
+        else:
+            messages.success(request, 'Alocação removida.')
+
+        next_url = request.POST.get('next', '')
+        if next_url == 'alunos':
+            return redirect('evento_alocar', pk=evento.pk)
+        return redirect('evento_detail_gestao', pk=evento.pk)
 
 
 class EventoCancelarView(View):
@@ -907,6 +1042,27 @@ class EventoCancelarView(View):
             messages.warning(request, f'Evento "{evento}" cancelado.')
         else:
             messages.success(request, f'Evento "{evento}" restaurado.')
+        return redirect('evento_detail_gestao', pk=pk)
+
+
+class EventoExcluirFuturosView(View):
+    """Exclui todos os eventos futuros com o mesmo título que o evento dado."""
+
+    def post(self, request, pk):
+        from django.utils import timezone
+
+        evento = get_object_or_404(Evento, pk=pk)
+        agora = timezone.now()
+        futuros = Evento.objects.filter(
+            titulo=evento.titulo,
+            data_hora_inicio__gt=agora,
+        ).exclude(pk=pk)
+        total = futuros.count()
+        futuros.delete()
+        messages.warning(
+            request,
+            f'{total} evento(s) futuro(s) com o título "{evento.titulo}" excluído(s).',
+        )
         return redirect('evento_detail_gestao', pk=pk)
 
 

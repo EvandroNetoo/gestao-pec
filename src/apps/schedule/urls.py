@@ -171,6 +171,11 @@ urlpatterns = [
         views.EventoCancelarView.as_view(),
         name='evento_cancelar',
     ),
+    path(
+        'gestao/eventos/<int:pk>/excluir-futuros/',
+        views.EventoExcluirFuturosView.as_view(),
+        name='evento_excluir_futuros',
+    ),
     # ── Relatórios ─────────────────────────────────────────────
     path(
         'gestao/relatorios/',

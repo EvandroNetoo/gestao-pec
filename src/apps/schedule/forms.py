@@ -282,6 +282,16 @@ class EventoCriarForm(NoRequiredAttrFormMixin, forms.Form):
 class EventoForm(NoRequiredAttrFormMixin, forms.ModelForm):
     """Formulário para editar um evento existente."""
 
+    aplicar_futuros = forms.BooleanField(
+        required=False,
+        initial=True,
+        label='Aplicar alterações a todos os eventos futuros com o mesmo título',
+        help_text=(
+            'Atualiza horário, local, peso, oficinas e cancelamento nos eventos '
+            'futuros. A data de cada evento é preservada.'
+        ),
+    )
+
     class Meta:
         model = Evento
         fields = [
@@ -306,7 +316,7 @@ class EventoForm(NoRequiredAttrFormMixin, forms.ModelForm):
             'oficinas': forms.CheckboxSelectMultiple,
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, total_futuros=0, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['oficinas'].queryset = Oficina.objects.filter(
             semestre__ativo=True
@@ -315,6 +325,17 @@ class EventoForm(NoRequiredAttrFormMixin, forms.ModelForm):
             '%Y-%m-%dT%H:%M',
         ]
         self.fields['data_hora_fim'].input_formats = ['%Y-%m-%dT%H:%M']
+        if total_futuros:
+            self.fields['aplicar_futuros'].label = (
+                f'Aplicar alterações também nos {total_futuros} '
+                f'evento(s) futuro(s) com o mesmo título'
+            )
+        else:
+            self.fields['aplicar_futuros'].initial = False
+            self.fields['aplicar_futuros'].disabled = True
+            self.fields[
+                'aplicar_futuros'
+            ].help_text = 'Não há eventos futuros com o mesmo título.'
 
     def clean(self):
         cleaned = super().clean()
@@ -335,7 +356,7 @@ class AlocacaoPresencaForm(NoRequiredAttrFormMixin, forms.ModelForm):
 
 
 class AlocarAlunosForm(NoRequiredAttrFormMixin, forms.Form):
-    """Seleciona múltiplos alunos para alocar de uma vez."""
+    """Seleciona múltiplos alunos para alocar manualmente a um evento."""
 
     alunos = forms.ModelMultipleChoiceField(
         queryset=Aluno.objects.none(),
@@ -346,13 +367,17 @@ class AlocarAlunosForm(NoRequiredAttrFormMixin, forms.Form):
     def __init__(self, *args, evento: Evento, **kwargs):
         super().__init__(*args, **kwargs)
         ja_alocados = evento.alocacoes.values_list('aluno_id', flat=True)
-        oficinas_evento = evento.oficinas.all()
-        qs = Aluno.objects.filter(turma__semestre__ativo=True).exclude(
-            pk__in=ja_alocados
+        qs = (
+            Aluno.objects
+            .filter(turma__semestre__ativo=True)
+            .exclude(pk__in=ja_alocados)
+            .select_related('turma')
+            .order_by('turma__nome', 'nome')
         )
-        if oficinas_evento.exists():
-            qs = qs.filter(oficinas_fixas__in=oficinas_evento).distinct()
         self.fields['alunos'].queryset = qs
+        self.fields['alunos'].label_from_instance = lambda a: (
+            f'{a.nome} ({a.turma.nome})'
+        )
 
 
 # ── Presença (público) ────────────────────────────────────────────

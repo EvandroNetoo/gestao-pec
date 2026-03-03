@@ -36,6 +36,21 @@
         <div class="flex flex-wrap gap-2 mb-6">
             <a href="{% url 'evento_update' evento.pk %}"
                class="btn btn-sm btn-outline">✏️ Editar</a>
+
+            {% if not evento.cancelado %}
+
+                <form method="post"
+                      action="{% url 'evento_excluir_futuros' evento.pk %}"
+                      class="inline">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="btn btn-sm btn-error btn-outline"
+                            onclick="return confirm('Excluir todos os eventos FUTUROS com o título &quot;{{ evento.titulo }}&quot;? Esta ação não pode ser desfeita.')">
+                        🗑️ Excluir eventos futuros
+                    </button>
+                </form>
+
+            {% endif %}
             <form method="post"
                   action="{% url 'evento_cancelar' evento.pk %}"
                   class="inline">
@@ -106,9 +121,10 @@
 
                         <div class="flex gap-2">
                             <a href="{% url 'evento_alocar' evento.pk %}"
-                               class="btn btn-primary btn-sm">+ Alocar Alunos</a>
+                               class="btn btn-primary btn-sm">👥 Gerenciar Alunos</a>
                             <a href="{% url 'evento_presenca' evento.pk %}"
-                               class="btn btn-outline btn-sm">📝 Registrar Presenças</a>
+                               class="btn btn-outline btn-sm">📝 Registrar
+                            Presenças</a>
                         </div>
 
                     {% endif %}

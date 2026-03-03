@@ -1,0 +1,229 @@
+{% extends "schedule/gestao/base_gestao.html" %}
+
+{% block title %}
+
+    Alunos — {{ evento.titulo }} —
+
+{% endblock title %}
+
+{% block gestao_content %}
+
+    <div class="flex items-center gap-2 mb-6">
+        <a href="{% url 'evento_detail_gestao' evento.pk %}"
+           class="btn btn-ghost btn-sm btn-circle">←</a>
+        <div>
+            <h1 class="text-2xl font-bold">Gerenciar Alunos</h1>
+            <p class="text-base-content/60 text-sm">
+                {{ evento.titulo }} — {{ evento.data_hora_inicio|date:"d/m/Y" }}
+            </p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {# ── Alunos já alocados ──────────────────────────────────── #}
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title text-base">
+                    Alunos alocados
+                    <span class="badge badge-neutral badge-sm">{{ alocacoes|length }}</span>
+                </h2>
+
+                {% if total_futuros %}
+
+                    <p class="text-xs text-warning">
+                        🔁 Remover também propagará para os {{ total_futuros }} evento(s) futuro(s).
+                    </p>
+
+                {% endif %}
+
+                {% if alocacoes %}
+
+                    <div class="overflow-y-auto max-h-[60vh]">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Aluno</th>
+                                    <th>Turma</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                                {% for aloc in alocacoes %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'aluno_detail' aloc.aluno.pk %}"
+                                               class="link link-hover text-sm">
+                                                {{ aloc.aluno.nome }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-ghost badge-sm">{{ aloc.aluno.turma }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-sm 
+                                                {% if aloc.status == 'Presente' %}
+                                                     badge-success {% elif aloc.status == 'Ausente' %}badge-error {% elif aloc.status == 'Previsto' %}badge-warning {% elif aloc.status == 'Dispensado' %}badge-info 
+                                                {% endif %}">
+                                                {{ aloc.status }}
+                                            </span>
+                                        </td>
+                                        <td class="text-right">
+                                            <form method="post" action="{% url 'alocacao_remover' aloc.pk %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="next" value="alunos">
+
+                                                {% if total_futuros %}
+
+                                                    <input type="hidden" name="propagar_futuros" value="1">
+
+                                                {% endif %}
+                                                <button type="submit" class="btn btn-ghost btn-xs text-error" onclick="return confirm('Remover {{ aloc.aluno.nome }} deste evento? 
+                                                    {% if total_futuros %}
+                                                         (e dos {{ total_futuros }} evento(s) futuros) 
+                                                    {% endif %}');" title="Remover alocação">
+                                                    🗑️
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                {% else %}
+
+
+                    <div class="text-center text-base-content/50 py-8">
+                        Nenhum aluno alocado ainda.
+                    </div>
+
+                {% endif %}
+            </div>
+        </div>
+
+        {# ── Adicionar alunos ───────────────────────────────────── #}
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title text-base">
+                    Adicionar alunos
+
+                    {% if form.alunos.field.queryset.count %}
+
+                        <span class="badge badge-neutral badge-sm">{{ form.alunos.field.queryset.count }} disponíveis</span>
+
+                    {% endif %}
+                </h2>
+
+                {% if form.alunos.field.queryset.count %}
+
+                    <form method="post" action="{% url 'evento_alocar' evento.pk %}">
+                        {% csrf_token %}
+
+                        {# Campo de busca local #}
+                        <input type="text"
+                               id="busca-aluno"
+                               class="input input-sm w-full mb-3"
+                               placeholder="Filtrar por nome ou turma…"
+                               oninput="filtrarAlunos(this.value)">
+
+                        <div class="overflow-y-auto max-h-[50vh] pr-1" id="lista-alunos">
+                            {% regroup form.alunos.field.queryset by turma as por_turma %}
+
+                            {% for grupo in por_turma %}
+                                <details class="mb-2" open>
+                                    <summary class="cursor-pointer font-semibold text-sm text-base-content/70 py-1 select-none">
+                                        {{ grupo.grouper }} ({{ grupo.list|length }})
+                                    </summary>
+                                    <div class="pl-4 mt-1 space-y-1">
+
+                                        {% for aluno in grupo.list %}
+                                            <label class="flex items-center gap-2 py-0.5 cursor-pointer aluno-row"
+                                                   data-nome="{{ aluno.nome|lower }}"
+                                                   data-turma="{{ aluno.turma|lower }}">
+                                                <input type="checkbox"
+                                                       name="alunos"
+                                                       value="{{ aluno.pk }}"
+                                                       class="checkbox checkbox-sm checkbox-primary" />
+                                                <span class="text-sm">{{ aluno.nome }}</span>
+                                            </label>
+
+                                        {% endfor %}
+                                    </div>
+                                </details>
+
+                            {% endfor %}
+                        </div>
+
+                        <div class="flex justify-between items-center mt-4 gap-2">
+                            <label class="flex items-center gap-2 text-sm cursor-pointer">
+                                <input type="checkbox"
+                                       class="checkbox checkbox-xs"
+                                       id="sel-todos"
+                                       onchange="toggleTodos(this.checked)">
+                                Selecionar todos
+                            </label>
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                + Alocar selecionados
+                            </button>
+                        </div>
+
+                        {% if total_futuros %}
+
+                            <label class="flex items-center gap-2 text-sm cursor-pointer mt-3 p-2 bg-base-200 rounded-box">
+                                <input type="checkbox"
+                                       name="propagar_futuros"
+                                       value="1"
+                                       class="checkbox checkbox-sm checkbox-warning"
+                                       checked>
+                                <span>
+                                    Propagar para os <strong>{{ total_futuros }}</strong> evento(s)
+                                    futuro(s) com o mesmo título
+                                </span>
+                            </label>
+
+                        {% endif %}
+
+                        {% if form.alunos.errors %}
+
+                            <p class="text-error text-sm mt-2">{{ form.alunos.errors|join:", " }}</p>
+
+                        {% endif %}
+                    </form>
+
+                {% else %}
+
+
+                    <div class="text-center text-base-content/50 py-8">
+                        Todos os alunos ativos já estão alocados neste evento.
+                    </div>
+
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function filtrarAlunos(q) {
+            q = q.toLowerCase();
+            document.querySelectorAll('.aluno-row').forEach(row => {
+                const match = row.dataset.nome.includes(q) || row.dataset.turma.includes(q);
+                row.style.display = match ? '' : 'none';
+            });
+        }
+
+        function toggleTodos(checked) {
+            document.querySelectorAll('#lista-alunos input[type=checkbox]').forEach(cb => {
+                if (cb.closest('.aluno-row').style.display !== 'none') {
+                    cb.checked = checked;
+                }
+            });
+        }
+    </script>
+
+{% endblock gestao_content %}
