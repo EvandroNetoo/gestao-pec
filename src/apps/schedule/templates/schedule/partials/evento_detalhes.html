@@ -91,7 +91,7 @@
 
                 {% endif %}
 
-                {% if not evento.cancelado %}
+                {% if not evento.cancelado and request.user.is_superuser %}
 
                     <div class="flex justify-end mt-2">
                         <a href="{% url 'evento_presenca' evento.pk %}"
