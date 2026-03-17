@@ -2,108 +2,135 @@
 
 {% block title %}
 
-Agenda —
+    Agenda —
 
 {% endblock title %}
 
 {% block content %}
 
-{% include "components/public_navbar.html" with active_page="agenda" %}
+    {% include "components/public_navbar.html" with active_page="agenda" %}
 
-<div class="mx-auto w-full max-w-7xl px-4 pt-20 sm:px-6 lg:px-8">
-    <div class="flex flex-wrap gap-1 sm:gap-2 justify-end">
-        <span class="badge badge-xs sm:badge-sm" style="background:#2563eb;
+    <div class="mx-auto w-full max-w-7xl px-4 pt-20 sm:px-6 lg:px-8">
+        <div class="flex flex-wrap gap-1 sm:gap-2 justify-end">
+            <span class="badge badge-xs sm:badge-sm"
+                  style="background:#2563eb;
                          color:#fff">Periódico</span>
-        <span class="badge badge-xs sm:badge-sm" style="background:#c90c0f;
+            <span class="badge badge-xs sm:badge-sm"
+                  style="background:#c90c0f;
                          color:#fff">Esporádico</span>
+        </div>
     </div>
-</div>
 
-<div class="container mx-auto p-2 sm:p-4 max-w-6xl">
-    <div id="calendar" class="bg-base-100 rounded-box p-2 sm:p-4 shadow-sm"></div>
-</div>
+    <div class="container mx-auto p-2 sm:p-4 max-w-6xl">
+        <div id="calendar" class="bg-base-100 rounded-box p-2 sm:p-4 shadow-sm"></div>
+    </div>
 
-<div id="modal-container"></div>
+    <div id="modal-container"></div>
 
-<script>
-    (function () {
-        const calendarEl = document.getElementById('calendar');
-        if (!calendarEl || calendarEl.hasAttribute('data-fc-initialized')) return;
-        calendarEl.setAttribute('data-fc-initialized', 'true');
+    <script>
+        (function() {
+            function initCalendar(root) {
+                const scope = root && root.querySelector ? root : document;
+                const calendarEl = scope.querySelector('#calendar') || document.getElementById('calendar');
 
-        const isMobile = window.innerWidth < 768;
-
-        const calendar = new FullCalendar.Calendar(calendarEl, {
-            allDaySlot: false,
-            initialView: 'dayGridMonth',
-            locale: 'pt-br',
-            headerToolbar:
-            //   ? { left: 'prev,next', center: 'title', right: 'listWeek,dayGridMonth' } : 
-            {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-            },
-            buttonText: {
-                today: 'Hoje',
-                month: 'Mês',
-                week: 'Semana',
-                day: 'Dia',
-                list: 'Lista'
-            },
-            events: '{% url "api_eventos" %}',
-            eventClick: function (info) {
-                info.jsEvent.preventDefault();
-                htmx.ajax(
-                    'GET',
-                    '/evento/' + info.event.id + '/detalhes/', {
-                    target: '#modal-container',
-                    swap: 'innerHTML'
+                if (!calendarEl || calendarEl.hasAttribute('data-fc-initialized')) {
+                    return;
                 }
-                );
-            },
-            windowResize: function (view) {
-                const mobile = window.innerWidth < 768;
-                if (mobile && calendar.view.type === 'dayGridMonth') {
-                    calendar.changeView('listWeek');
+
+                if (!window.FullCalendar || !window.FullCalendar.Calendar) {
+                    return;
                 }
-            },
-            height: 'auto',
-            navLinks: true,
-            editable: false,
-            dayMaxEvents: isMobile ? 2 : true,
-            titleFormat: isMobile ? {
-                month: 'short',
-                year: 'numeric'
-            } : {
-                month: 'long',
-                year: 'numeric'
-            },
-        });
-        calendar.render();
-    })();
-</script>
 
-<style>
-    @media (max-width: 767px) {
-        .fc .fc-toolbar {
-            flex-wrap: wrap;
-            gap: 0.25rem;
-        }
+                calendarEl.setAttribute('data-fc-initialized', 'true');
 
-        .fc .fc-toolbar-title {
-            font-size: 1rem !important;
-        }
+                const isMobile = window.innerWidth < 768;
 
-        .fc .fc-button {
-            padding: 0.2rem 0.5rem;
-            font-size: 0.75rem;
-        }
+                const calendar = new FullCalendar.Calendar(calendarEl, {
+                    allDaySlot: false,
+                    initialView: 'dayGridMonth',
+                    locale: 'pt-br',
+                    headerToolbar:
+                    //   ? { left: 'prev,next', center: 'title', right: 'listWeek,dayGridMonth' } : 
+                    {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+                    },
+                    buttonText: {
+                        today: 'Hoje',
+                        month: 'Mês',
+                        week: 'Semana',
+                        day: 'Dia',
+                        list: 'Lista'
+                    },
+                    events: '{% url "api_eventos" %}',
+                    eventClick: function(info) {
+                        info.jsEvent.preventDefault();
+                        htmx.ajax(
+                            'GET',
+                            '/evento/' + info.event.id + '/detalhes/', {
+                                target: '#modal-container',
+                                swap: 'innerHTML'
+                            }
+                        );
+                    },
+                    windowResize: function() {
+                        const mobile = window.innerWidth < 768;
+                        if (mobile && calendar.view.type === 'dayGridMonth') {
+                            calendar.changeView('listWeek');
+                        }
+                    },
+                    height: 'auto',
+                    navLinks: true,
+                    editable: false,
+                    dayMaxEvents: isMobile ? 2 : true,
+                    titleFormat: isMobile ? {
+                        month: 'short',
+                        year: 'numeric'
+                    } : {
+                        month: 'long',
+                        year: 'numeric'
+                    },
+                });
 
-        .fc-col-header-cell-cushion {
-            font-size: 0.75rem;
+                calendar.render();
+            }
+
+            if (!window.__agendaCalendarAfterSettleBound) {
+                document.body.addEventListener('htmx:afterSettle', function(evt) {
+                    initCalendar(evt.target);
+                });
+                window.__agendaCalendarAfterSettleBound = true;
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                initCalendar(document);
+            }, {
+                once: true
+            });
+        })();
+    </script>
+
+    <style>
+        @media (max-width: 767px) {
+            .fc .fc-toolbar {
+                flex-wrap: wrap;
+                gap: 0.25rem;
+            }
+
+            .fc .fc-toolbar-title {
+                font-size: 1rem !important;
+            }
+
+            .fc .fc-button {
+                padding: 0.2rem 0.5rem;
+                font-size: 0.75rem;
+            }
+
+            .fc-col-header-cell-cushion {
+                font-size: 0.75rem;
+            }
         }
-    }
-</style>
+    </style>
 
 {% endblock content %}

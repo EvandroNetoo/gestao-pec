@@ -2,143 +2,144 @@
 
 {% block title %}
 
-Divisão dos Grupos —
+    Divisão dos Grupos —
 
 {% endblock title %}
 
 {% block content %}
 
-<div class="relative min-h-screen overflow-x-hidden text-base-content">
-    <div aria-hidden="true"
-        class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-80 bg-linear-to-b from-primary/12 via-secondary/8 to-transparent">
-    </div>
-    <div aria-hidden="true"
-        class="pointer-events-none absolute right-0 top-24 -z-10 h-72 w-72 rounded-full bg-secondary/10 blur-3xl">
-    </div>
+    <div class="relative min-h-screen overflow-x-hidden text-base-content">
+        <div aria-hidden="true"
+             class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-80 bg-linear-to-b from-primary/12 via-secondary/8 to-transparent">
+        </div>
+        <div aria-hidden="true"
+             class="pointer-events-none absolute right-0 top-24 -z-10 h-72 w-72 rounded-full bg-secondary/10 blur-3xl">
+        </div>
 
-    {% include "components/public_navbar.html" with active_page="grupos" %}
+        {% include "components/public_navbar.html" with active_page="grupos" %}
 
-    <section class="mx-auto w-full max-w-7xl px-4 pt-24 pb-8 sm:px-6 sm:pt-24 sm:pb-10 lg:px-8 lg:pt-24 lg:pb-12">
-        <div class="space-y-5">
-            <div class="card bg-base-100 shadow-sm">
-                <div class="card-body gap-4">
-                    <div>
-                        <h1 class="text-2xl font-bold">Divisão dos Grupos</h1>
-                        <p class="text-sm text-base-content/70">
-                            Organização atual das oficinas, alunos e professores.
-                        </p>
-                    </div>
-
-                    <div class="stats stats-vertical lg:stats-horizontal border border-base-300">
-                        <div class="stat">
-                            <div class="stat-title">Alunos</div>
-                            <div class="stat-value text-primary">{{ total_alunos }}</div>
+        <section class="mx-auto w-full max-w-7xl px-4 pt-24 pb-8 sm:px-6 sm:pt-24 sm:pb-10 lg:px-8 lg:pt-24 lg:pb-12">
+            <div class="space-y-5">
+                <div class="card bg-base-100 shadow-sm">
+                    <div class="card-body gap-4">
+                        <div>
+                            <h1 class="text-2xl font-bold">Divisão dos Grupos</h1>
+                            <p class="text-sm text-base-content/70">
+                                Organização atual das oficinas, alunos e professores.
+                            </p>
                         </div>
-                        <div class="stat">
-                            <div class="stat-title">Oficinas</div>
-                            <div class="stat-value text-secondary">{{ total_oficinas }}</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-title">Professores</div>
-                            <div class="stat-value text-accent">{{ total_professores }}</div>
-                        </div>
-                    </div>
 
-                    <form method="get" class="flex flex-wrap gap-2">
-                        <a href="{% url 'divisao_grupos' %}" class="btn btn-sm 
+                        <div class="stats stats-vertical lg:stats-horizontal border border-base-300">
+                            <div class="stat">
+                                <div class="stat-title">Alunos</div>
+                                <div class="stat-value text-primary">{{ total_alunos }}</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-title">Oficinas</div>
+                                <div class="stat-value text-secondary">{{ total_oficinas }}</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-title">Professores</div>
+                                <div class="stat-value text-accent">{{ total_professores }}</div>
+                            </div>
+                        </div>
+
+                        <form method="get" class="flex flex-wrap gap-2">
+                            <a href="{% url 'divisao_grupos' %}" class="btn btn-sm 
                                 {% if not professor_filtro %}
-                                    btn-primary
+                                     btn-primary 
                                 {% else %}
-                                    btn-outline
+                                     btn-outline 
                                 {% endif %}">Todas as oficinas</a>
 
-                        {% for professor in professores %}
-                        <button type="submit" name="professor" value="{{ professor.pk }}" class="btn btn-sm 
-                                    {% if professor_filtro == professor.pk|stringformat:'s' %}
-                                        btn-primary
-                                    {% else %}
-                                        btn-outline
-                                    {% endif %}">{{ professor.nome }}</button>
+                                {% for professor in professores %}
+                                    <button type="submit" name="professor" value="{{ professor.pk }}" class="btn btn-sm 
+                                        {% if professor_filtro == professor.pk|stringformat:'s' %}
+                                             btn-primary 
+                                        {% else %}
+                                             btn-outline 
+                                        {% endif %}">
+                                        {{ professor.nome }}
+                                    </button>
+
+                                {% endfor %}
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+
+                        {% for oficina in oficinas %}
+                            <article class="card bg-base-100 border border-base-300 shadow-sm">
+                                <div class="card-body gap-3">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div>
+                                            <h2 class="card-title text-lg">{{ oficina.nome }}</h2>
+                                            <p class="text-sm text-base-content/70">{{ oficina.semestre.nome }}</p>
+                                        </div>
+                                        <span class="badge badge-primary badge-soft">{{ oficina.total_alunos }} alunos</span>
+                                    </div>
+
+                                    <div class="flex flex-wrap gap-2">
+
+                                        {% for professor in oficina.professores.all %}
+
+                                            {% if professor.ativo %}
+
+                                                <span class="badge badge-outline">{{ professor.nome }}</span>
+
+                                            {% endif %}
+                                        {% empty %}
+                                            <span class="badge badge-ghost">Sem professor</span>
+
+                                        {% endfor %}
+                                    </div>
+
+                                    <div class="divider my-0"></div>
+
+                                    {% regroup oficina.alunos.all|dictsort:"turma.nome" by turma as alunos_por_turma %}
+                                    <div class="space-y-2 text-sm">
+
+                                        {% for grupo in alunos_por_turma %}
+                                            <div>
+                                                <div class="font-semibold mb-1">
+                                                    {{ grupo.grouper.nome }} <span class="badge badge-xs">{{ grupo.list|length }}</span>
+                                                </div>
+                                                <p class="text-base-content/80">
+
+                                                    {% for aluno in grupo.list %}
+                                                        {{ aluno.nome }}
+
+                                                        {% if not forloop.last %},{% endif %}
+
+                                                    {% endfor %}
+                                                </p>
+                                            </div>
+                                        {% empty %}
+                                            <p class="text-base-content/60">Sem alunos vinculados.</p>
+
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </article>
+                        {% empty %}
+                            <div class="col-span-full">
+                                <div class="alert">
+                                    <span>Nenhuma oficina encontrada para este filtro.</span>
+                                </div>
+                            </div>
 
                         {% endfor %}
-                    </form>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-
-                {% for oficina in oficinas %}
-                <article class="card bg-base-100 border border-base-300 shadow-sm">
-                    <div class="card-body gap-3">
-                        <div class="flex items-start justify-between gap-3">
-                            <div>
-                                <h2 class="card-title text-lg">{{ oficina.nome }}</h2>
-                                <p class="text-sm text-base-content/70">{{ oficina.semestre.nome }}</p>
-                            </div>
-                            <span class="badge badge-primary badge-soft">{{ oficina.total_alunos }} alunos</span>
-                        </div>
-
-                        <div class="flex flex-wrap gap-2">
-
-                            {% for professor in oficina.professores.all %}
-
-                            {% if professor.ativo %}
-
-                            <span class="badge badge-outline">{{ professor.nome }}</span>
-
-                            {% endif %}
-                            {% empty %}
-                            <span class="badge badge-ghost">Sem professor</span>
-
-                            {% endfor %}
-                        </div>
-
-                        <div class="divider my-0"></div>
-
-                        {% regroup oficina.alunos.all|dictsort:"turma.nome" by turma as alunos_por_turma %}
-                        <div class="space-y-2 text-sm">
-
-                            {% for grupo in alunos_por_turma %}
-                            <div>
-                                <div class="font-semibold mb-1">
-                                    {{ grupo.grouper.nome }} <span class="badge badge-xs">{{ grupo.list|length }}</span>
-                                </div>
-                                <p class="text-base-content/80">
-
-                                    {% for aluno in grupo.list %}
-                                    {{ aluno.nome }}
-
-                                    {% if not forloop.last %},{% endif %}
-
-                                    {% endfor %}
-                                </p>
-                            </div>
-                            {% empty %}
-                            <p class="text-base-content/60">Sem alunos vinculados.</p>
-
-                            {% endfor %}
-                        </div>
-                    </div>
-                </article>
-                {% empty %}
-                <div class="col-span-full">
-                    <div class="alert">
-                        <span>Nenhuma oficina encontrada para este filtro.</span>
                     </div>
                 </div>
+            </section>
 
-                {% endfor %}
-            </div>
+            <footer class="border-t border-base-300/70 bg-base-200/70">
+                <div class="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-sm text-base-content/70 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+                    <p>© {% now "Y" %} Evandro Neto.</p>
+                    <p>Organização de grupos do PEC.</p>
+                </div>
+            </footer>
         </div>
-    </section>
 
-    <footer class="border-t border-base-300/70 bg-base-200/70">
-        <div
-            class="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-sm text-base-content/70 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-            <p>© {% now "Y" %} Evandro Neto.</p>
-            <p>Organização de grupos do PEC.</p>
-        </div>
-    </footer>
-</div>
-
-{% endblock content %}
+    {% endblock content %}
