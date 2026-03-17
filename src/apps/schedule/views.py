@@ -218,7 +218,9 @@ class DivisaoGruposView(TemplateView):
             )
 
         professores = Professor.objects.filter(ativo=True).order_by('nome')
-        total_alunos = oficinas_qs.aggregate(total=Sum('total_alunos'))['total'] or 0
+        total_alunos = (
+            oficinas_qs.aggregate(total=Sum('total_alunos'))['total'] or 0
+        )
         total_oficinas = oficinas_qs.count()
         total_professores = (
             Professor.objects
@@ -468,7 +470,7 @@ class OficinaListView(ListView):
                 total_alunos=Count(
                     'alunos',
                     filter=Q(alunos__turma__semestre__ativo=True),
-                    distinct=True
+                    distinct=True,
                 ),
                 total_professores=Count(
                     'professores',
