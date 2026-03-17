@@ -47,21 +47,66 @@
 
                 const calendar = new FullCalendar.Calendar(calendarEl, {
                     allDaySlot: false,
-                    initialView: 'dayGridMonth',
+                    initialView: isMobile ? 'listMonth' : 'dayGridMonth',
                     locale: 'pt-br',
-                    headerToolbar:
-                    //   ? { left: 'prev,next', center: 'title', right: 'listWeek,dayGridMonth' } : 
-                    {
+                    firstDay: 1,
+                    weekNumberCalculation: 'ISO',
+                    fixedWeekCount: false,
+                    showNonCurrentDates: true,
+                    titleRangeSeparator: ' até ',
+                    dayHeaderFormat: isMobile ? {
+                        weekday: 'short'
+                    } : {
+                        weekday: 'long'
+                    },
+                    views: {
+                        dayGridMonth: {
+                            titleFormat: isMobile ? {
+                                month: 'short',
+                                year: 'numeric'
+                            } : {
+                                month: 'long',
+                                year: 'numeric'
+                            }
+                        },
+                        timeGridWeek: {
+                            titleFormat: {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric'
+                            }
+                        },
+                        timeGridDay: {
+                            titleFormat: {
+                                weekday: 'long',
+                                day: '2-digit',
+                                month: 'long',
+                                year: 'numeric'
+                            }
+                        },
+                        listMonth: {
+                            titleFormat: {
+                                month: 'long',
+                                year: 'numeric'
+                            }
+                        }
+                    },
+                    headerToolbar: isMobile ? {
+                        left: 'prev,next',
+                        center: 'title',
+                        right: 'today,listMonth,dayGridMonth'
+                    } : {
                         left: 'prev,next today',
                         center: 'title',
-                        right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+                        right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
                     },
                     buttonText: {
                         today: 'Hoje',
                         month: 'Mês',
                         week: 'Semana',
                         day: 'Dia',
-                        list: 'Lista'
+                        list: 'Lista',
+                        listMonth: 'Lista mês'
                     },
                     events: '{% url "api_eventos" %}',
                     eventClick: function(info) {
@@ -77,20 +122,15 @@
                     windowResize: function() {
                         const mobile = window.innerWidth < 768;
                         if (mobile && calendar.view.type === 'dayGridMonth') {
-                            calendar.changeView('listWeek');
+                            calendar.changeView('listMonth');
+                        } else if (!mobile && calendar.view.type === 'listMonth') {
+                            calendar.changeView('dayGridMonth');
                         }
                     },
                     height: 'auto',
                     navLinks: true,
                     editable: false,
                     dayMaxEvents: isMobile ? 2 : true,
-                    titleFormat: isMobile ? {
-                        month: 'short',
-                        year: 'numeric'
-                    } : {
-                        month: 'long',
-                        year: 'numeric'
-                    },
                 });
 
                 calendar.render();
