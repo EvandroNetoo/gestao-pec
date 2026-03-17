@@ -468,6 +468,7 @@ class OficinaListView(ListView):
                 total_alunos=Count(
                     'alunos',
                     filter=Q(alunos__turma__semestre__ativo=True),
+                    distinct=True
                 ),
                 total_professores=Count(
                     'professores',
