@@ -43,6 +43,12 @@ class Oficina(models.Model):
         related_name='oficinas',
         verbose_name='Semestre',
     )
+    professores = models.ManyToManyField(
+        'Professor',
+        blank=True,
+        related_name='oficinas',
+        verbose_name='Professores',
+    )
 
     class Meta:
         verbose_name = 'Oficina'
@@ -51,6 +57,19 @@ class Oficina(models.Model):
 
     def __str__(self):
         return f'{self.nome} — {self.semestre}'
+
+
+class Professor(models.Model):
+    nome = models.CharField('Nome', max_length=150)
+    ativo = models.BooleanField('Ativo', default=True)
+
+    class Meta:
+        verbose_name = 'Professor'
+        verbose_name_plural = 'Professores'
+        ordering = ['nome']
+
+    def __str__(self):
+        return self.nome
 
 
 class Aluno(models.Model):

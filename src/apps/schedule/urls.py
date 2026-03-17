@@ -5,6 +5,7 @@ from schedule import views
 urlpatterns = [
     # ── Públicas ───────────────────────────────────────────────
     path('', views.AgendaView.as_view(), name='home'),
+    path('grupos/', views.DivisaoGruposView.as_view(), name='divisao_grupos'),
     path(
         'api/eventos/',
         views.EventosApiView.as_view(),

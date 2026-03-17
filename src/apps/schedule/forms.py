@@ -7,6 +7,7 @@ from schedule.models import (
     Aluno,
     Evento,
     Oficina,
+    Professor,
     Semestre,
     Turma,
 )
@@ -48,7 +49,10 @@ class OficinaForm(NoRequiredAttrFormMixin, forms.ModelForm):
 
     class Meta:
         model = Oficina
-        fields = ['nome', 'local_padrao', 'semestre']
+        fields = ['nome', 'local_padrao', 'semestre', 'professores']
+        widgets = {
+            'professores': forms.CheckboxSelectMultiple,
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -62,12 +66,13 @@ class OficinaForm(NoRequiredAttrFormMixin, forms.ModelForm):
         self.fields['alunos'].label_from_instance = lambda aluno: (
             f'{aluno.nome} ({aluno.turma.nome})'
         )
+        self.fields['professores'].queryset = Professor.objects.filter(
+            ativo=True
+        ).order_by('nome')
         if self.instance.pk:
             self.fields['alunos'].initial = self.instance.alunos.values_list(
                 'pk', flat=True
             )
-
-        print(dir(self.fields['alunos'].widget))
 
     def save(self, commit=True):
         oficina = super().save(commit=commit)

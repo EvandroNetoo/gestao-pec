@@ -7,6 +7,7 @@ from django.db.models import (
     Case,
     Count,
     IntegerField,
+    Prefetch,
     Q,
     Sum,
     Value,
@@ -46,6 +47,7 @@ from schedule.models import (
     Aluno,
     Evento,
     Oficina,
+    Professor,
     Semestre,
     Turma,
 )
@@ -171,6 +173,67 @@ class PresencaView(View):
                 'form': form,
             },
         )
+
+
+@method_decorator(login_not_required, name='dispatch')
+class DivisaoGruposView(TemplateView):
+    template_name = 'schedule/divisao_grupos.html'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        professor_id = self.request.GET.get('professor', '').strip()
+
+        oficinas_qs = (
+            Oficina.objects
+            .select_related('semestre')
+            .filter(semestre__ativo=True)
+            .prefetch_related(
+                'professores',
+                Prefetch(
+                    'alunos',
+                    queryset=Aluno.objects.select_related('turma').filter(
+                        turma__semestre__ativo=True
+                    ),
+                ),
+            )
+            .annotate(
+                total_alunos=Count(
+                    'alunos',
+                    filter=Q(alunos__turma__semestre__ativo=True),
+                    distinct=True,
+                ),
+                total_professores=Count(
+                    'professores',
+                    filter=Q(professores__ativo=True),
+                    distinct=True,
+                ),
+            )
+            .order_by('nome')
+        )
+
+        if professor_id:
+            oficinas_qs = oficinas_qs.filter(
+                professores__id=professor_id,
+                professores__ativo=True,
+            )
+
+        professores = Professor.objects.filter(ativo=True).order_by('nome')
+        total_alunos = oficinas_qs.aggregate(total=Sum('total_alunos'))['total'] or 0
+        total_oficinas = oficinas_qs.count()
+        total_professores = (
+            Professor.objects
+            .filter(ativo=True, oficinas__in=oficinas_qs)
+            .distinct()
+            .count()
+        )
+
+        ctx['oficinas'] = oficinas_qs
+        ctx['professores'] = professores
+        ctx['professor_filtro'] = professor_id
+        ctx['total_alunos'] = total_alunos
+        ctx['total_oficinas'] = total_oficinas
+        ctx['total_professores'] = total_professores
+        return ctx
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -405,6 +468,11 @@ class OficinaListView(ListView):
                 total_alunos=Count(
                     'alunos',
                     filter=Q(alunos__turma__semestre__ativo=True),
+                ),
+                total_professores=Count(
+                    'professores',
+                    filter=Q(professores__ativo=True),
+                    distinct=True,
                 ),
             )
             .order_by('nome')

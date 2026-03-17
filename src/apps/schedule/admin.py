@@ -6,6 +6,7 @@ from schedule.models import (
     Aluno,
     Evento,
     Oficina,
+    Professor,
     Semestre,
     Turma,
 )
@@ -45,7 +46,20 @@ class TurmaAdmin(ImportExportModelAdmin):
 
 @admin.register(Oficina)
 class OficinaAdmin(ImportExportModelAdmin):
-    list_display = ['nome', 'local_padrao']
+    list_display = ['nome', 'local_padrao', 'total_professores']
+    search_fields = ['nome']
+    filter_horizontal = ['professores']
+
+    def total_professores(self, obj):
+        return obj.professores.filter(ativo=True).count()
+
+    total_professores.short_description = 'Professores'
+
+
+@admin.register(Professor)
+class ProfessorAdmin(ImportExportModelAdmin):
+    list_display = ['nome', 'ativo']
+    list_filter = ['ativo']
     search_fields = ['nome']
 
 
