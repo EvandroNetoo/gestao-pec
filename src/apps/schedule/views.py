@@ -731,6 +731,8 @@ class EventoCreateView(View):
         )
 
     def post(self, request):
+        from django.utils import timezone
+
         form = EventoCriarForm(request.POST)
         if form.is_valid():
             d = form.cleaned_data
@@ -757,12 +759,21 @@ class EventoCreateView(View):
             # m2m_changed em Evento.oficinas ao chamar evento.oficinas.set().
             oficinas = d.get('oficinas')
             criados = 0
+            tz = timezone.get_current_timezone()
             for dt in datas:
+                data_hora_inicio = timezone.make_aware(
+                    datetime.combine(dt, d['hora_inicio']),
+                    tz,
+                )
+                data_hora_fim = timezone.make_aware(
+                    datetime.combine(dt, d['hora_fim']),
+                    tz,
+                )
                 evento = Evento(
                     titulo=d['titulo'],
                     tipo=d['tipo'],
-                    data_hora_inicio=datetime.combine(dt, d['hora_inicio']),
-                    data_hora_fim=datetime.combine(dt, d['hora_fim']),
+                    data_hora_inicio=data_hora_inicio,
+                    data_hora_fim=data_hora_fim,
                     local=d.get('local', '') or '',
                     peso_presenca=d['peso_presenca'],
                 )
