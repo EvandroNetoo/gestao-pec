@@ -1,29 +1,31 @@
 #!/usr/bin/env bash
+# Para o script se der erro
 set -o errexit
 
 cd src
 
-# Caminho para os arquivos de controle (geralmente em um volume persistente ou pasta temporária)
+# Define o caminho das flags
+# Nota: /tmp costuma persistir enquanto o container estiver rodando. 
+# Se o container for DELETADO e recriado, ele rodará de novo (o que é o ideal).
 STATIC_FLAG="/tmp/static_collected.flag"
 MIGRATE_FLAG="/tmp/migration_done.flag"
 
 # 1. Coleta de arquivos estáticos
-# Roda se a variável for 1 E se o arquivo de trava NÃO existir
-if [ "${RUN_STATIC_COLLECTION_ON_START:-0}" = "1" ] && [ ! -f "$STATIC_FLAG" ]; then
-    echo "Collecting static files for the first time..."
+if [ ! -f "$STATIC_FLAG" ]; then
+    echo "First run: Collecting static files..."
     python manage.py collectstatic --noinput
-    touch "$STATIC_FLAG" # Cria o arquivo para marcar como feito
+    touch "$STATIC_FLAG"
 else
-    echo "Skipping static file collection (already done or disabled)."
+    echo "Static files already collected. Skipping..."
 fi
 
 # 2. Migrações do Banco de Dados
-if [ "${RUN_MIGRATIONS_ON_START:-0}" = "1" ] && [ ! -f "$MIGRATE_FLAG" ]; then
-    echo "Running migrations for the first time..."
+if [ ! -f "$MIGRATE_FLAG" ]; then
+    echo "First run: Running migrations..."
     python manage.py migrate --noinput
-    touch "$MIGRATE_FLAG" # Cria o arquivo para marcar como feito
+    touch "$MIGRATE_FLAG"
 else
-    echo "Skipping migrations (already done or disabled)."
+    echo "Migrations already applied. Skipping..."
 fi
 
 echo "Starting Gunicorn..."
