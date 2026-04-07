@@ -30,17 +30,25 @@
                         <a href="{% url 'divisao_grupos' %}" class="rounded-full px-4 font-medium transition-colors 
                             {% if active_page == 'grupos' %}bg-primary text-primary-content{% endif %}">Grupos</a>
                         </li>
-                    </ul>
-                </div>
-
-                <div class="navbar-end gap-2">
-                    <div class="lg:hidden flex gap-1">
-                        <a href="{% url 'home' %}" class="btn btn-ghost btn-sm 
-                            {% if active_page == 'agenda' %}btn-active{% endif %}">Agenda</a>
-                            <a href="{% url 'divisao_grupos' %}" class="btn btn-ghost btn-sm 
-                                {% if active_page == 'grupos' %}btn-active{% endif %}">Grupos</a>
-                            </div>
-                            <a href="{% url 'dashboard' %}" class="btn btn-primary btn-sm sm:btn-md">Gestão</a>
-                        </div>
+                        <li>
+                            <a href="{% url 'apresentacao_list' %}" class="rounded-full px-4 font-medium transition-colors 
+                                {% if active_page == 'apresentacoes' %}
+                                     bg-primary text-primary-content 
+                                {% endif %}">Apresentações</a>
+                            </li>
+                        </ul>
                     </div>
-                </header>
+
+                    <div class="navbar-end gap-2">
+                        <div class="flex gap-1 lg:hidden">
+                            <a href="{% url 'home' %}" class="btn btn-ghost btn-sm 
+                                {% if active_page == 'agenda' %}btn-active{% endif %}">Agenda</a>
+                                <a href="{% url 'divisao_grupos' %}" class="btn btn-ghost btn-sm 
+                                    {% if active_page == 'grupos' %}btn-active{% endif %}">Grupos</a>
+                                    <a href="{% url 'apresentacao_list' %}" class="btn btn-ghost btn-sm 
+                                        {% if active_page == 'apresentacoes' %}btn-active{% endif %}">Apresentações</a>
+                                    </div>
+                                    <a href="{% url 'dashboard' %}" class="btn btn-primary btn-sm sm:btn-md">Gestão</a>
+                                </div>
+                            </div>
+                        </header>

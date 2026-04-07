@@ -5,6 +5,7 @@ from core.mixins import NoRequiredAttrFormMixin
 from schedule.models import (
     AlocacaoPresenca,
     Aluno,
+    Apresentacao,
     Evento,
     Oficina,
     Professor,
@@ -420,3 +421,25 @@ class PresencaForm(NoRequiredAttrFormMixin, forms.Form):
             else:
                 alocacao.status = AlocacaoPresenca.Status.AUSENTE
             alocacao.save(skip_validation=True)
+
+
+# ── Apresentação ───────────────────────────────────────────────────
+class ApresentacaoForm(NoRequiredAttrFormMixin, forms.ModelForm):
+    class Meta:
+        model = Apresentacao
+        fields = ['nome', 'tipo', 'url', 'arquivo']
+        widgets = {
+            'arquivo': forms.ClearableFileInput(
+                attrs={'accept': 'application/pdf,.pdf'}
+            ),
+        }
+
+    def clean_arquivo(self):
+        arquivo = self.cleaned_data.get('arquivo')
+        if (
+            arquivo
+            and hasattr(arquivo, 'content_type')
+            and arquivo.content_type != 'application/pdf'
+        ):
+            raise forms.ValidationError('Envie um arquivo PDF válido.')
+        return arquivo

@@ -7,6 +7,26 @@ urlpatterns = [
     path('', views.AgendaView.as_view(), name='home'),
     path('grupos/', views.DivisaoGruposView.as_view(), name='divisao_grupos'),
     path(
+        'apresentacoes/',
+        views.ApresentacaoListView.as_view(),
+        name='apresentacao_list',
+    ),
+    path(
+        'apresentacoes/nova/',
+        views.ApresentacaoCreateView.as_view(),
+        name='apresentacao_create',
+    ),
+    path(
+        'apresentacoes/<int:pk>/editar/',
+        views.ApresentacaoUpdateView.as_view(),
+        name='apresentacao_update',
+    ),
+    path(
+        'apresentacoes/<int:pk>/excluir/',
+        views.ApresentacaoDeleteView.as_view(),
+        name='apresentacao_delete',
+    ),
+    path(
         'api/eventos/',
         views.EventosApiView.as_view(),
         name='api_eventos',

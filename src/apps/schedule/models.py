@@ -153,6 +153,52 @@ class Evento(models.Model):
         return '—'
 
 
+class Apresentacao(models.Model):
+    class Tipo(models.TextChoices):
+        PDF = 'PDF', 'PDF'
+        LINK = 'Link', 'Link'
+
+    nome = models.CharField('Nome', max_length=200)
+    tipo = models.CharField(
+        'Tipo',
+        max_length=10,
+        choices=Tipo.choices,
+    )
+    url = models.URLField('URL de acesso', blank=True)
+    arquivo = models.FileField(
+        'Arquivo PDF',
+        upload_to='apresentacoes/',
+        blank=True,
+    )
+    criado_em = models.DateTimeField('Criado em', auto_now_add=True)
+    atualizado_em = models.DateTimeField('Atualizado em', auto_now=True)
+
+    class Meta:
+        verbose_name = 'Apresentação'
+        verbose_name_plural = 'Apresentações'
+        ordering = ['nome']
+
+    def __str__(self):
+        return f'{self.nome} ({self.tipo})'
+
+    def clean(self):
+        super().clean()
+        if self.tipo == self.Tipo.LINK and not self.url:
+            raise ValidationError(
+                'Informe uma URL para apresentações do tipo Link.'
+            )
+        if self.tipo == self.Tipo.PDF and not (self.arquivo or self.url):
+            raise ValidationError(
+                'Envie um arquivo PDF ou informe uma URL para apresentações '
+                'do tipo PDF.'
+            )
+
+    def get_acesso_url(self):
+        if self.tipo == self.Tipo.PDF and self.arquivo:
+            return self.arquivo.url
+        return self.url
+
+
 class AlocacaoPresenca(models.Model):
     class Status(models.TextChoices):
         PREVISTO = 'Previsto', 'Previsto'

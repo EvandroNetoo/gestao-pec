@@ -120,6 +120,9 @@ STORAGES = {
     'staticfiles': {
         'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
     },
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
 }
 WHITENOISE_MAX_AGE = 31536000 if not DEBUG else 60
 

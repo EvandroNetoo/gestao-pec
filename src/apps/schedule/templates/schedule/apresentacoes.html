@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}
+
+    Apresentações —
+
+{% endblock title %}
+
+{% block content %}
+
+    {% include "components/public_navbar.html" with active_page="apresentacoes" %}
+
+    <section class="mx-auto w-full max-w-7xl px-4 pb-8 pt-24 sm:px-6 lg:px-8">
+        <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-2xl font-bold">Apresentações</h1>
+                <p class="text-sm text-base-content/70">
+                    Lista pública de materiais (PDF ou links externos).
+                </p>
+            </div>
+
+            {% if request.user.is_staff %}
+
+                <label for="modal-apresentacao-criar" class="btn btn-primary btn-sm">
+                    + Nova Apresentação
+                </label>
+
+            {% endif %}
+        </div>
+
+        {% if messages %}
+
+            <div class="mb-4 space-y-2">
+
+                {% for message in messages %}
+                    <c-alert type="{{ message.tags }}">
+                        {{ message }}
+                    </c-alert>
+
+                {% endfor %}
+            </div>
+
+        {% endif %}
+
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body p-0 sm:p-2">
+                <div class="overflow-x-auto">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Tipo</th>
+                                <th>Acesso</th>
+
+                                {% if request.user.is_staff %}<th class="text-right">Ações</th>{% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            {% for apresentacao in apresentacoes %}
+                                <tr>
+                                    <td class="font-medium">{{ apresentacao.nome }}</td>
+                                    <td>
+                                        <span class="badge badge-outline">{{ apresentacao.tipo }}</span>
+                                    </td>
+                                    <td>
+
+                                        {% if apresentacao.get_acesso_url %}
+
+                                            <a href="{{ apresentacao.get_acesso_url }}"
+                                               target="_blank"
+                                               rel="noopener noreferrer"
+                                               hx-boost="false"
+                                               class="btn btn-xs btn-neutral">
+                                                Abrir
+                                            </a>
+
+                                        {% else %}
+
+
+                                            <span class="badge badge-ghost">Indisponível</span>
+
+                                        {% endif %}
+                                    </td>
+
+                                    {% if request.user.is_staff %}
+
+                                        <td class="text-right">
+                                            <div class="flex justify-end gap-1">
+                                                <label for="modal-apresentacao-editar-{{ apresentacao.pk }}"
+                                                       class="btn btn-ghost btn-xs">
+                                                    Editar
+                                                </label>
+                                                <label for="modal-apresentacao-excluir-{{ apresentacao.pk }}"
+                                                       class="btn btn-ghost btn-xs text-error">
+                                                    Excluir
+                                                </label>
+                                            </div>
+                                        </td>
+
+                                    {% endif %}
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan=" 
+                                        {% if request.user.is_staff %}
+                                             4 
+                                        {% else %}
+                                             3 
+                                        {% endif %}" class="py-8 text-center text-base-content/60">
+                                        Nenhuma apresentação cadastrada.
+                                    </td>
+                                </tr>
+
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {% if request.user.is_staff %}
+
+        <input type="checkbox" id="modal-apresentacao-criar" class="modal-toggle" />
+        <div class="modal" role="dialog">
+            <form method="post"
+                  action="{% url 'apresentacao_create' %}"
+                  enctype="multipart/form-data"
+                  hx-boost="false"
+                  class="modal-box w-11/12 max-w-xl rounded-lg">
+                {% csrf_token %}
+                <h2 class="mb-4 text-lg font-bold">Nova Apresentação</h2>
+
+                <div class="space-y-4">
+                    <div class="space-y-1">
+                        <label for="apresentacao-criar-nome" class="text-sm font-medium">Nome</label>
+                        <input id="apresentacao-criar-nome"
+                               type="text"
+                               name="nome"
+                               class="input input-bordered w-full"
+                               required>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label for="apresentacao-criar-tipo" class="text-sm font-medium">Tipo</label>
+                        <select id="apresentacao-criar-tipo"
+                                name="tipo"
+                                class="select select-bordered w-full"
+                                required>
+
+                            {% for value, label in tipos_apresentacao %}
+                                <option value="{{ value }}">{{ label }}</option>
+
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label for="apresentacao-criar-url" class="text-sm font-medium">URL</label>
+                        <input id="apresentacao-criar-url"
+                               type="url"
+                               name="url"
+                               class="input input-bordered w-full"
+                               placeholder="https://exemplo.com/apresentacao">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label for="apresentacao-criar-arquivo" class="text-sm font-medium">
+                            Arquivo PDF
+                        </label>
+                        <input id="apresentacao-criar-arquivo"
+                               type="file"
+                               name="arquivo"
+                               accept="application/pdf,.pdf"
+                               class="file-input file-input-bordered w-full">
+                    </div>
+                </div>
+
+                <div class="modal-action">
+                    <label for="modal-apresentacao-criar" class="btn btn-ghost">Cancelar</label>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+            <label class="modal-backdrop" for="modal-apresentacao-criar">Fechar</label>
+        </div>
+
+        {% for apresentacao in apresentacoes %}
+            <input type="checkbox"
+                   id="modal-apresentacao-editar-{{ apresentacao.pk }}"
+                   class="modal-toggle" />
+            <div class="modal" role="dialog">
+                <form method="post"
+                      action="{% url 'apresentacao_update' apresentacao.pk %}"
+                      enctype="multipart/form-data"
+                      hx-boost="false"
+                      class="modal-box w-11/12 max-w-xl rounded-lg">
+                    {% csrf_token %}
+                    <h2 class="mb-4 text-lg font-bold">Editar Apresentação</h2>
+
+                    <div class="space-y-4">
+                        <div class="space-y-1">
+                            <label for="apresentacao-editar-nome-{{ apresentacao.pk }}"
+                                   class="text-sm font-medium">Nome</label>
+                            <input id="apresentacao-editar-nome-{{ apresentacao.pk }}"
+                                   type="text"
+                                   name="nome"
+                                   value="{{ apresentacao.nome }}"
+                                   class="input input-bordered w-full"
+                                   required>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label for="apresentacao-editar-tipo-{{ apresentacao.pk }}"
+                                   class="text-sm font-medium">Tipo</label>
+                            <select id="apresentacao-editar-tipo-{{ apresentacao.pk }}"
+                                    name="tipo"
+                                    class="select select-bordered w-full"
+                                    required>
+
+                                {% for value, label in tipos_apresentacao %}
+                                    <option value="{{ value }}" 
+                                        {% if apresentacao.tipo == value %}selected{% endif %}>{{ label }}</option>
+
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label for="apresentacao-editar-url-{{ apresentacao.pk }}"
+                                   class="text-sm font-medium">URL</label>
+                            <input id="apresentacao-editar-url-{{ apresentacao.pk }}"
+                                   type="url"
+                                   name="url"
+                                   value="{{ apresentacao.url }}"
+                                   class="input input-bordered w-full"
+                                   placeholder="https://exemplo.com/apresentacao">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label for="apresentacao-editar-arquivo-{{ apresentacao.pk }}"
+                                   class="text-sm font-medium">
+                                Arquivo PDF
+                            </label>
+                            <input id="apresentacao-editar-arquivo-{{ apresentacao.pk }}"
+                                   type="file"
+                                   name="arquivo"
+                                   accept="application/pdf,.pdf"
+                                   class="file-input file-input-bordered w-full">
+                        </div>
+
+                        {% if apresentacao.arquivo %}
+
+                            <p class="text-sm text-base-content/70">
+                                Arquivo atual:
+                                <a href="{{ apresentacao.arquivo.url }}"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   hx-boost="false"
+                                   class="link">
+                                    {{ apresentacao.arquivo.name }}
+                                </a>
+                            </p>
+
+                        {% endif %}
+                    </div>
+
+                    <div class="modal-action">
+                        <label for="modal-apresentacao-editar-{{ apresentacao.pk }}"
+                               class="btn btn-ghost">Cancelar</label>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+                <label class="modal-backdrop"
+                       for="modal-apresentacao-editar-{{ apresentacao.pk }}">
+                    Fechar
+                </label>
+            </div>
+
+            <input type="checkbox"
+                   id="modal-apresentacao-excluir-{{ apresentacao.pk }}"
+                   class="modal-toggle" />
+            <div class="modal" role="dialog">
+                <form method="post"
+                      action="{% url 'apresentacao_delete' apresentacao.pk %}"
+                      hx-boost="false"
+                      class="modal-box w-11/12 max-w-md rounded-lg">
+                    {% csrf_token %}
+                    <h2 class="mb-4 text-lg font-bold">Excluir Apresentação</h2>
+                    <p class="text-base-content/80">
+                        Tem certeza que deseja excluir <strong>{{ apresentacao.nome }}</strong>?
+                    </p>
+
+                    <div class="modal-action">
+                        <label for="modal-apresentacao-excluir-{{ apresentacao.pk }}"
+                               class="btn btn-ghost">Cancelar</label>
+                        <button type="submit" class="btn btn-error">Excluir</button>
+                    </div>
+                </form>
+                <label class="modal-backdrop"
+                       for="modal-apresentacao-excluir-{{ apresentacao.pk }}">
+                    Fechar
+                </label>
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+{% endblock content %}

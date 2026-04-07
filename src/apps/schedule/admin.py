@@ -4,6 +4,7 @@ from import_export.admin import ImportExportModelAdmin
 from schedule.models import (
     AlocacaoPresenca,
     Aluno,
+    Apresentacao,
     Evento,
     Oficina,
     Professor,
@@ -92,3 +93,10 @@ class AlocacaoPresencaAdmin(ImportExportModelAdmin):
     list_display = ['aluno', 'evento', 'status']
     list_filter = ['status', 'evento']
     search_fields = ['aluno__nome', 'evento__titulo']
+
+
+@admin.register(Apresentacao)
+class ApresentacaoAdmin(ImportExportModelAdmin):
+    list_display = ['nome', 'tipo', 'url', 'arquivo', 'atualizado_em']
+    list_filter = ['tipo']
+    search_fields = ['nome', 'url']

@@ -3,6 +3,7 @@ from time import sleep
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_not_required
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db.models import (
     Case,
     Count,
@@ -33,6 +34,7 @@ from schedule.forms import (
     AlocarAlunosForm,
     AlunoBulkForm,
     AlunoForm,
+    ApresentacaoForm,
     CopiarTurmaForm,
     EventoCriarForm,
     EventoForm,
@@ -45,6 +47,7 @@ from schedule.forms import (
 from schedule.models import (
     AlocacaoPresenca,
     Aluno,
+    Apresentacao,
     Evento,
     Oficina,
     Professor,
@@ -236,6 +239,97 @@ class DivisaoGruposView(TemplateView):
         ctx['total_oficinas'] = total_oficinas
         ctx['total_professores'] = total_professores
         return ctx
+
+
+@method_decorator(login_not_required, name='dispatch')
+class ApresentacaoListView(ListView):
+    model = Apresentacao
+    template_name = 'schedule/apresentacoes.html'
+    context_object_name = 'apresentacoes'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['tipos_apresentacao'] = Apresentacao.Tipo.choices
+        return ctx
+
+
+class StaffRequiredMixin(UserPassesTestMixin):
+    raise_exception = True
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+
+class ApresentacaoCreateView(StaffRequiredMixin, CreateView):
+    model = Apresentacao
+    form_class = ApresentacaoForm
+    template_name = 'schedule/gestao/form.html'
+    success_url = reverse_lazy('apresentacao_list')
+
+    def get(self, request, *args, **kwargs):
+        return redirect(self.success_url)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['page_title'] = 'Nova Apresentação'
+        ctx['back_url'] = self.success_url
+        return ctx
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Apresentação criada com sucesso.')
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        for errors in form.errors.values():
+            for error in errors:
+                messages.error(self.request, error)
+        return redirect(self.success_url)
+
+
+class ApresentacaoUpdateView(StaffRequiredMixin, UpdateView):
+    model = Apresentacao
+    form_class = ApresentacaoForm
+    template_name = 'schedule/gestao/form.html'
+    success_url = reverse_lazy('apresentacao_list')
+
+    def get(self, request, *args, **kwargs):
+        return redirect(self.success_url)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['page_title'] = f'Editar Apresentação: {self.object.nome}'
+        ctx['back_url'] = self.success_url
+        return ctx
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Apresentação atualizada com sucesso.')
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        for errors in form.errors.values():
+            for error in errors:
+                messages.error(self.request, error)
+        return redirect(self.success_url)
+
+
+class ApresentacaoDeleteView(StaffRequiredMixin, DeleteView):
+    model = Apresentacao
+    template_name = 'schedule/gestao/confirm_delete.html'
+    success_url = reverse_lazy('apresentacao_list')
+    context_object_name = 'obj'
+
+    def get(self, request, *args, **kwargs):
+        return redirect(self.success_url)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['page_title'] = 'Excluir Apresentação'
+        ctx['back_url'] = self.success_url
+        return ctx
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Apresentação excluída com sucesso.')
+        return super().form_valid(form)
 
 
 # ═══════════════════════════════════════════════════════════════════
