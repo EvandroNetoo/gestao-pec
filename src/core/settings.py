@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'import_export',
     'django_cotton',
     'widget_tweaks',
+    'storages',
     # Local apps
     'accounts',
     'schedule',
@@ -116,6 +117,14 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+WHITENOISE_MAX_AGE = 31536000 if not DEBUG else 60
+
+
+# Media files (uploads)
+
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 STORAGES = {
     'staticfiles': {
         'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
@@ -124,13 +133,20 @@ STORAGES = {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
     },
 }
-WHITENOISE_MAX_AGE = 31536000 if not DEBUG else 60
-
-
-# Media files (uploads)
-
-MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+if not DEBUG:
+    STORAGES['default'] = {
+        'BACKEND': 'storages.backends.s3.S3Storage',
+        'OPTIONS': {
+            'access_key': env_settings.AWS_ACCESS_KEY_ID,
+            'secret_key': env_settings.AWS_SECRET_ACCESS_KEY,
+            'bucket_name': env_settings.AWS_STORAGE_BUCKET_NAME,
+            'endpoint_url': env_settings.AWS_S3_ENDPOINT_URL,
+            'region_name': env_settings.AWS_S3_REGION_NAME,
+            'addressing_style': 'path',
+            'signature_version': 's3v4',
+            'default_acl': None,
+        },
+    }
 
 
 # Default primary key field type

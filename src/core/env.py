@@ -32,5 +32,12 @@ class EnvSettings(BaseSettings):
     SESSION_COOKIE_SECURE: bool = False
     CSRF_COOKIE_SECURE: bool = False
 
+    # Media Storage (Railway S3-compatible bucket)
+    AWS_S3_ENDPOINT_URL: str = ''
+    AWS_STORAGE_BUCKET_NAME: str = ''
+    AWS_S3_REGION_NAME: str = ''
+    AWS_ACCESS_KEY_ID: str = ''
+    AWS_SECRET_ACCESS_KEY: str = ''
+
 
 env_settings = EnvSettings()
