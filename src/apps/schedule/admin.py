@@ -66,7 +66,7 @@ class ProfessorAdmin(ImportExportModelAdmin):
 
 @admin.register(Aluno)
 class AlunoAdmin(ImportExportModelAdmin):
-    list_display = ['nome', 'turma', 'total_presencas']
+    list_display = ['nome', 'turma', 'creditos_falta', 'total_presencas']
     list_filter = ['turma__semestre', 'turma']
     search_fields = ['nome']
     filter_horizontal = ['oficinas_fixas']

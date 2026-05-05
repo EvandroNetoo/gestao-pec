@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}
+
+    Créditos de Falta —
+
+{% endblock title %}
+
+{% block content %}
+
+    {% include "components/public_navbar.html" with active_page="faltas" %}
+
+    <main class="mx-auto w-full max-w-7xl px-4 pt-24 pb-8 sm:px-6 lg:px-8">
+        <div class="space-y-5">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold">Créditos de Falta</h1>
+                    <p class="text-sm text-base-content/70">
+                        Saldo atual de faltas disponíveis por aluno.
+                    </p>
+                </div>
+
+                <form method="get" class="flex flex-col gap-2 sm:flex-row">
+                    <select name="turma" class="select select-sm select-neutral">
+                        <option value="">Todas as turmas</option>
+
+                        {% for turma in turmas %}
+
+                            <option value="{{ turma.pk }}" 
+                                {% if turma_filtro == turma.pk|stringformat:"d" %}selected{% endif %}>{{ turma }}</option>
+
+                        {% endfor %}
+
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-neutral">Filtrar</button>
+
+                    {% if turma_filtro %}
+
+                        <a href="{% url 'creditos_falta_publico' %}"
+                           class="btn btn-sm btn-ghost">Limpar</a>
+
+                    {% endif %}
+
+                </form>
+            </div>
+
+            {% regroup alunos by turma as alunos_por_turma %}
+
+            {% for grupo in alunos_por_turma %}
+
+                <section class="card bg-base-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="flex items-center justify-between gap-3">
+                            <h2 class="card-title">{{ grupo.grouper }}</h2>
+                            <span class="badge badge-ghost">{{ grupo.list|length }} aluno(s)</span>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Aluno</th>
+                                        <th class="text-center">Créditos</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+
+                                    {% for aluno in grupo.list %}
+
+                                        <tr>
+                                            <td class="font-medium">{{ aluno.nome }}</td>
+                                            <td class="text-center">
+                                                <span class="badge 
+                                                    {% if aluno.creditos_falta < 0 %}
+                                                         badge-error 
+                                                    {% else %}
+                                                         badge-primary 
+                                                    {% endif %}">{{ aluno.creditos_falta }}</span>
+                                                </td>
+                                            </tr>
+
+                                        {% endfor %}
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+
+                {% empty %}
+
+                    <div class="alert">
+                        <span>Nenhum aluno ativo encontrado.</span>
+                    </div>
+
+                {% endfor %}
+            </div>
+        </main>
+
+    {% endblock content %}

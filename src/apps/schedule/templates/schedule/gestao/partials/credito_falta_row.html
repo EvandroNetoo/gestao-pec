@@ -1,0 +1,65 @@
+{% load l10n %}
+
+<tr id="credito-row-{{ aluno.pk }}">
+    <td>
+        <a href="{% url 'aluno_detail' aluno.pk %}"
+           class="link link-hover font-medium whitespace-nowrap">{{ aluno.nome }}</a>
+
+        {% if status %}
+
+            <span class="badge badge-success badge-sm ml-2">{{ status }}</span>
+
+        {% endif %}
+
+        {% if erro %}
+
+            <span class="badge badge-error badge-sm ml-2">{{ erro }}</span>
+
+        {% endif %}
+
+    </td>
+    <td class="text-center">
+        <span class="badge badge-ghost badge-sm whitespace-nowrap">{{ aluno.turma }}</span>
+    </td>
+    <td class="text-center">
+        <div class="flex items-center justify-center gap-1">
+            <button type="button"
+                    class="btn btn-sm"
+                    onclick="ajustarCredito('{{ aluno.pk }}', '-1')">
+                -1
+            </button>
+            <button type="button"
+                    class="btn btn-sm"
+                    onclick="ajustarCredito('{{ aluno.pk }}', '-0.5')">
+                -0,5
+            </button>
+            <input type="number"
+                   id="credito-input-{{ aluno.pk }}"
+                   name="creditos_{{ aluno.pk }}"
+                   value="{{ aluno.creditos_falta|unlocalize }}"
+                   step="0.01"
+                   class="input input-sm input-neutral w-24 text-center">
+            <button type="button"
+                    class="btn btn-sm"
+                    onclick="ajustarCredito('{{ aluno.pk }}', '0.5')">
+                +0,5
+            </button>
+            <button type="button"
+                    class="btn btn-sm"
+                    onclick="ajustarCredito('{{ aluno.pk }}', '1')">
+                +1
+            </button>
+        </div>
+    </td>
+    <td class="text-center">
+        <button type="button"
+                class="btn btn-primary btn-sm"
+                hx-post="{% url 'creditos_falta_gestao' %}"
+                hx-target="#credito-row-{{ aluno.pk }}"
+                hx-swap="outerHTML"
+                hx-include="#creditos-todos-form input[name='csrfmiddlewaretoken'], #credito-input-{{ aluno.pk }}"
+                hx-vals='{"action": "update", "aluno": "{{ aluno.pk }}"}'>
+            Salvar
+        </button>
+    </td>
+</tr>

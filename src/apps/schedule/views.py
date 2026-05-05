@@ -36,6 +36,7 @@ from schedule.forms import (
     AlunoForm,
     ApresentacaoForm,
     CopiarTurmaForm,
+    CreditoFaltaAlunoForm,
     EventoCriarForm,
     EventoForm,
     OficinaBulkForm,
@@ -238,6 +239,33 @@ class DivisaoGruposView(TemplateView):
         ctx['total_alunos'] = total_alunos
         ctx['total_oficinas'] = total_oficinas
         ctx['total_professores'] = total_professores
+        return ctx
+
+
+@method_decorator(login_not_required, name='dispatch')
+class CreditosFaltaPublicoView(ListView):
+    model = Aluno
+    template_name = 'schedule/creditos_falta.html'
+    context_object_name = 'alunos'
+
+    def get_queryset(self):
+        qs = (
+            Aluno.objects
+            .filter(turma__semestre__ativo=True)
+            .select_related('turma', 'turma__semestre')
+            .order_by('turma__nome', 'nome')
+        )
+        turma = self.request.GET.get('turma')
+        if turma:
+            qs = qs.filter(turma_id=turma)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['turma_filtro'] = self.request.GET.get('turma', '')
+        ctx['turmas'] = Turma.objects.filter(
+            semestre__ativo=True
+        ).select_related('semestre')
         return ctx
 
 
@@ -841,6 +869,126 @@ class AlunoDetailView(DetailView):
             .order_by('-evento__data_hora_inicio')
         )
         return ctx
+
+
+class CreditosFaltaGestaoView(View):
+    template_name = 'schedule/gestao/creditos_falta.html'
+    row_template_name = 'schedule/gestao/partials/credito_falta_row.html'
+
+    def get_queryset(self):
+        qs = (
+            Aluno.objects
+            .filter(turma__semestre__ativo=True)
+            .select_related('turma', 'turma__semestre')
+            .order_by('turma__nome', 'nome')
+        )
+        q = self.request.GET.get('q', '').strip()
+        if q:
+            qs = qs.filter(nome__icontains=q)
+        turma = self.request.GET.get('turma')
+        if turma:
+            qs = qs.filter(turma_id=turma)
+        return qs
+
+    def get_context_data(self):
+        return {
+            'alunos': self.get_queryset(),
+            'q': self.request.GET.get('q', ''),
+            'turma_filtro': self.request.GET.get('turma', ''),
+            'turmas': Turma.objects.filter(
+                semestre__ativo=True
+            ).select_related('semestre'),
+        }
+
+    def get(self, request):
+        return render(request, self.template_name, self.get_context_data())
+
+    def post(self, request):
+        action = request.POST.get('action')
+        if action == 'update':
+            return self.post_update(request)
+        if action == 'save_all':
+            return self.post_save_all(request)
+        messages.error(request, 'Ação inválida.')
+        return redirect('creditos_falta_gestao')
+
+    def render_row(self, request, aluno, *, status='', erro=''):
+        return render(
+            request,
+            self.row_template_name,
+            {
+                'aluno': aluno,
+                'status': status,
+                'erro': erro,
+            },
+        )
+
+    def post_update(self, request):
+        aluno = get_object_or_404(
+            Aluno,
+            pk=request.POST.get('aluno'),
+            turma__semestre__ativo=True,
+        )
+        data = {'creditos_falta': request.POST.get(f'creditos_{aluno.pk}', '')}
+        form = CreditoFaltaAlunoForm(data, instance=aluno)
+        print(request.htmx.target)
+        if form.is_valid():
+            aluno = form.save()
+            if request.htmx.target == f'credito-row-{aluno.pk}':
+                return self.render_row(request, aluno, status='Salvo')
+            messages.success(
+                request,
+                f'Créditos de {aluno.nome} atualizados.',
+            )
+        else:
+            if request.htmx.target == f'credito-row-{aluno.pk}':
+                return self.render_row(
+                    request,
+                    aluno,
+                    erro='Valor inválido',
+                )
+            messages.error(
+                request,
+                f'Informe um valor válido para {aluno.nome}.',
+            )
+        return redirect(request.POST.get('next') or 'creditos_falta_gestao')
+
+    def post_save_all(self, request):
+        total_salvos = 0
+        total_erros = 0
+
+        for key, value in request.POST.items():
+            if not key.startswith('creditos_'):
+                continue
+            aluno_id = key.removeprefix('creditos_')
+            aluno = Aluno.objects.filter(
+                pk=aluno_id,
+                turma__semestre__ativo=True,
+            ).first()
+            if not aluno:
+                continue
+
+            form = CreditoFaltaAlunoForm(
+                {'creditos_falta': value},
+                instance=aluno,
+            )
+            if form.is_valid():
+                form.save()
+                total_salvos += 1
+            else:
+                total_erros += 1
+
+        if total_erros:
+            messages.error(
+                request,
+                f'{total_erros} saldo(s) não foram salvos por valor inválido.',
+            )
+        if total_salvos:
+            messages.success(
+                request,
+                f'{total_salvos} saldo(s) de crédito atualizados.',
+            )
+        return redirect(request.POST.get('next') or 'creditos_falta_gestao')
 
 
 # ═══════════════════════════════════════════════════════════════════

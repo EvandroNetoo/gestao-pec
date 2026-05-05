@@ -53,6 +53,13 @@
                                                 <label for="{{ field.id_for_label }}" class="cursor-pointer">
                                                     {{ field.label }}
                                                 </label>
+
+                                                {% if field.help_text %}
+
+                                                    <div class="text-xs text-base-content/60">{{ field.help_text }}</div>
+
+                                                {% endif %}
+
                                             </td>
                                             <td class="text-center">
                                                 <input type="checkbox" name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="toggle toggle-success" 

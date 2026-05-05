@@ -1,4 +1,8 @@
+from decimal import Decimal
+
 from django import forms
+from django.db import transaction
+from django.db.models import F
 from django.forms import DateTimeInput
 
 from core.mixins import NoRequiredAttrFormMixin
@@ -140,8 +144,9 @@ class OficinaBulkForm(NoRequiredAttrFormMixin, forms.Form):
 class AlunoForm(NoRequiredAttrFormMixin, forms.ModelForm):
     class Meta:
         model = Aluno
-        fields = ['nome', 'turma', 'oficinas_fixas']
+        fields = ['nome', 'turma', 'creditos_falta', 'oficinas_fixas']
         widgets = {
+            'creditos_falta': forms.NumberInput(attrs={'step': '0.01'}),
             'oficinas_fixas': forms.CheckboxSelectMultiple,
         }
 
@@ -153,6 +158,15 @@ class AlunoForm(NoRequiredAttrFormMixin, forms.ModelForm):
         self.fields['oficinas_fixas'].queryset = Oficina.objects.filter(
             semestre__ativo=True
         ).select_related('semestre')
+
+
+class CreditoFaltaAlunoForm(NoRequiredAttrFormMixin, forms.ModelForm):
+    class Meta:
+        model = Aluno
+        fields = ['creditos_falta']
+        widgets = {
+            'creditos_falta': forms.NumberInput(attrs={'step': '0.01'}),
+        }
 
 
 class AlunoBulkForm(NoRequiredAttrFormMixin, forms.Form):
@@ -390,6 +404,8 @@ class AlocarAlunosForm(NoRequiredAttrFormMixin, forms.Form):
 class PresencaForm(NoRequiredAttrFormMixin, forms.Form):
     """Formulário dinâmico para registrar presenças de um evento."""
 
+    CREDITO_POR_FALTA = Decimal('1.00')
+
     def __init__(self, *args, evento: Evento, **kwargs):
         super().__init__(*args, **kwargs)
         self.evento = evento
@@ -405,22 +421,43 @@ class PresencaForm(NoRequiredAttrFormMixin, forms.Form):
             self.fields[field_name] = forms.BooleanField(
                 required=False,
                 label=alocacao.aluno.nome,
+                help_text=f'{alocacao.aluno.creditos_falta} créditos',
                 initial=(alocacao.status == AlocacaoPresenca.Status.PRESENTE),
             )
 
     def save(self):
-        presentes_ids = set()
-        for alocacao in self.alocacoes:
-            field_name = f'aluno_{alocacao.aluno_id}'
-            if self.cleaned_data.get(field_name):
-                presentes_ids.add(alocacao.pk)
+        with transaction.atomic():
+            for alocacao in self.alocacoes:
+                field_name = f'aluno_{alocacao.aluno_id}'
+                status_anterior = alocacao.status
+                if self.cleaned_data.get(field_name):
+                    novo_status = AlocacaoPresenca.Status.PRESENTE
+                else:
+                    novo_status = AlocacaoPresenca.Status.AUSENTE
 
-        for alocacao in self.alocacoes:
-            if alocacao.pk in presentes_ids:
-                alocacao.status = AlocacaoPresenca.Status.PRESENTE
-            else:
-                alocacao.status = AlocacaoPresenca.Status.AUSENTE
-            alocacao.save(skip_validation=True)
+                if (
+                    novo_status == AlocacaoPresenca.Status.AUSENTE
+                    and status_anterior
+                    in (
+                        AlocacaoPresenca.Status.PREVISTO,
+                        AlocacaoPresenca.Status.PRESENTE,
+                    )
+                ):
+                    Aluno.objects.filter(pk=alocacao.aluno_id).update(
+                        creditos_falta=F('creditos_falta')
+                        - self.CREDITO_POR_FALTA
+                    )
+                elif (
+                    novo_status == AlocacaoPresenca.Status.PRESENTE
+                    and status_anterior == AlocacaoPresenca.Status.AUSENTE
+                ):
+                    Aluno.objects.filter(pk=alocacao.aluno_id).update(
+                        creditos_falta=F('creditos_falta')
+                        + self.CREDITO_POR_FALTA
+                    )
+
+                alocacao.status = novo_status
+                alocacao.save(skip_validation=True)
 
 
 # ── Apresentação ───────────────────────────────────────────────────

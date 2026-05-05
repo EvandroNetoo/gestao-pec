@@ -86,6 +86,12 @@ class Aluno(models.Model):
         related_name='alunos',
         verbose_name='Oficinas fixas',
     )
+    creditos_falta = models.DecimalField(
+        'Créditos de falta',
+        max_digits=6,
+        decimal_places=2,
+        default=0,
+    )
 
     class Meta:
         verbose_name = 'Aluno'

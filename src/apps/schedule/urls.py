@@ -7,6 +7,11 @@ urlpatterns = [
     path('', views.AgendaView.as_view(), name='home'),
     path('grupos/', views.DivisaoGruposView.as_view(), name='divisao_grupos'),
     path(
+        'faltas/',
+        views.CreditosFaltaPublicoView.as_view(),
+        name='creditos_falta_publico',
+    ),
+    path(
         'apresentacoes/',
         views.ApresentacaoListView.as_view(),
         name='apresentacao_list',
@@ -150,6 +155,11 @@ urlpatterns = [
         'gestao/alunos/<int:pk>/excluir/',
         views.AlunoDeleteView.as_view(),
         name='aluno_delete',
+    ),
+    path(
+        'gestao/creditos-faltas/',
+        views.CreditosFaltaGestaoView.as_view(),
+        name='creditos_falta_gestao',
     ),
     # ── Evento CRUD ────────────────────────────────────────────
     path(
