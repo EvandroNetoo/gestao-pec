@@ -1,0 +1,30 @@
+services:
+  presencas-pec:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - ./.env
+    environment:
+      DEBUG: "False"
+      DATABASE_URL: "sqlite:////code/data/db.sqlite3"
+      ALLOWED_HOSTS: '["pec.chatbotintegracar.online"]'
+      CSRF_TRUSTED_ORIGINS: '["https://pec.chatbotintegracar.online"]'
+      SESSION_COOKIE_SECURE: "True"
+      CSRF_COOKIE_SECURE: "True"
+    restart: unless-stopped
+    volumes:
+      - sqlite_data:/code/data
+    networks:
+      - app-network
+      - proxy
+
+networks:
+  app-network:
+    driver: bridge
+
+  proxy:
+    external: true
+
+volumes:
+  sqlite_data:
