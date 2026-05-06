@@ -1,5 +1,5 @@
 services:
-  presencas-pec:
+  gestao-pec:
     build:
       context: .
       dockerfile: Dockerfile
