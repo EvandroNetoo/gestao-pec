@@ -254,6 +254,7 @@ class CreditosFaltaPublicoView(ListView):
             .filter(turma__semestre__ativo=True)
             .select_related('turma', 'turma__semestre')
             .order_by('turma__nome', 'nome')
+            .exclude(creditos_falta=0)
         )
         turma = self.request.GET.get('turma')
         if turma:
