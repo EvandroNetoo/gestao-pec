@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 set -o errexit
 set -o pipefail
 set -o nounset
@@ -10,7 +11,7 @@ echo "Collecting static files..."
 python src/manage.py collectstatic --noinput
 
 echo "Starting Gunicorn..."
-exec gunicorn core.wsgi \
+gunicorn core.wsgi \
   --chdir src \
   --bind 0.0.0.0:8000 \
   --workers 2 \
