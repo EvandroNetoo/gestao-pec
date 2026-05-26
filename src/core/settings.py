@@ -220,8 +220,3 @@ if not DEBUG:
             },
         },
     }
-
-
-FORCE_SCRIPT_NAME = "/simposio"
-STATIC_URL = "/simposio/static/"
-MEDIA_URL = "/simposio/media/"
