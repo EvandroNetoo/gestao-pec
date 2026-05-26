@@ -19,6 +19,17 @@
 
     </td>
     <td class="text-center">
+        <div class="flex flex-wrap justify-center gap-2">
+
+            {% for oficina in aluno.oficinas_fixas.all %}
+                <span class="badge badge-ghost badge-sm">{{ oficina.nome }}</span>
+            {% empty %}
+                <span class="text-base-content/50">—</span>
+
+            {% endfor %}
+        </div>
+    </td>
+    <td class="text-center">
         <span class="badge badge-ghost badge-sm whitespace-nowrap">{{ aluno.turma }}</span>
     </td>
     <td class="text-center">

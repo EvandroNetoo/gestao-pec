@@ -60,6 +60,7 @@
                                 <thead>
                                     <tr>
                                         <th>Aluno</th>
+                                        <th>Oficina</th>
                                         <th class="text-center">Créditos</th>
                                     </tr>
                                 </thead>
@@ -69,6 +70,17 @@
 
                                         <tr>
                                             <td class="font-medium">{{ aluno.nome }}</td>
+                                            <td>
+                                                <div class="flex flex-wrap gap-2">
+
+                                                    {% for oficina in aluno.oficinas_fixas.all %}
+                                                        <span class="badge badge-ghost badge-sm">{{ oficina.nome }}</span>
+                                                    {% empty %}
+                                                        <span class="text-base-content/50">—</span>
+
+                                                    {% endfor %}
+                                                </div>
+                                            </td>
                                             <td class="text-center">
                                                 <span class="badge 
                                                     {% if aluno.creditos_falta < 0 %}

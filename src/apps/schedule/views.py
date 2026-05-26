@@ -253,6 +253,7 @@ class CreditosFaltaPublicoView(ListView):
             Aluno.objects
             .filter(turma__semestre__ativo=True)
             .select_related('turma', 'turma__semestre')
+            .prefetch_related('oficinas_fixas')
             .order_by('turma__nome', 'nome')
             .exclude(creditos_falta=0)
         )
@@ -881,6 +882,7 @@ class CreditosFaltaGestaoView(View):
             Aluno.objects
             .filter(turma__semestre__ativo=True)
             .select_related('turma', 'turma__semestre')
+            .prefetch_related('oficinas_fixas')
             .order_by('turma__nome', 'nome')
         )
         q = self.request.GET.get('q', '').strip()
